@@ -3,6 +3,12 @@ uuid = "a734d2a7-8d68-409b-9419-626914d4061d"
 authors = ["Chad Scherrer <chad.scherrer@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+BangBang = "198e06fe-97b7-11e9-32a5-e1d131e6ad66"
+Kaleido = "caafb194-7e8d-11e9-2724-d5981dd0806d"
+NamedTupleTools = "d9ec5142-1e00-5aa0-9d6a-321866360f50"
+Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
+
 [compat]
 julia = "1"
 
