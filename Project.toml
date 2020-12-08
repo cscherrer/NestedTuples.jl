@@ -1,0 +1,13 @@
+name = "NestedTuples"
+uuid = "a734d2a7-8d68-409b-9419-626914d4061d"
+authors = ["Chad Scherrer <chad.scherrer@gmail.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
