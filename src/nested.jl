@@ -4,6 +4,8 @@ struct Nested{T}
     value::T
 end
 
+Nested(;kwargs...) = Nested((;kwargs...))
+
 import Base
 
 function Base.show(io::IO, x::Nested)
