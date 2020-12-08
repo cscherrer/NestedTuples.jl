@@ -23,10 +23,18 @@ function lenses end
 
 lenses(x::Nested) = lenses(x.value)
 
-lenses(t::Tuple) = _lenses(t, ())
+@generated function lenses(x)
+    ℓ = _lenses(x)
+    return ℓ
+end
 
-lenses(nt::NamedTuple) = _lenses(nt, ())
-lenses(NT::Type{NamedTuple{K,V}}) where {K,V} = lenses(fromtype(NT))
+_lenses(NT::Type{NamedTuple{K,V}}) where {K,V} = _lenses(fromtype(NT))
+
+_lenses(T::Type{Tup}) where {Tup <: Tuple} = _lenses(fromtype(T))
+
+_lenses(t::Tuple) = _lenses(t, ())
+
+_lenses(nt::NamedTuple) = _lenses(nt, ())
 
 function _lenses(t::Tuple, acc)
     result = ()
