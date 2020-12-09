@@ -36,9 +36,3 @@ Base.get(x::Nested, ℓ::Lens) = Nested(get(x.value, ℓ))
 Setfield.set(x::Nested, ℓ::Lens, v) = Nested(set(x.value, ℓ, v))
 Setfield.set(x::Nested, ℓ::Setfield.PropertyLens, v) = Nested(set(x.value, ℓ, v))
 Setfield.set(x::Nested, ℓ::Setfield.ComposedLens, v) = Nested(set(x.value, ℓ, v))
-
-function Base.setindex(x::Nested, i::Int, v)
-    ℓ = lenses(x)
-    @boundscheck i < length(ℓ)
-    @inbounds set(x, lenses(x)[i], v)
-end
