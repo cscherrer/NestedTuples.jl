@@ -13,16 +13,32 @@ function Base.show(io::IO, x::Nested)
 end
 
 
-import NamedTupleTools
+lenses(x::Nested) = lenses(x.value)
 
-function Base.empty(x::Nested)
+function fromtype(N::Type{Nested{X}}) where {X}
+    return Nested(fromtype(X))
+end
+
+@generated function Base.empty(x::Nested)
+    e = _empty(fromtype(x))
+    return e
+end
+
+function _empty(x::Nested)
     ℓ = lenses(x)
     n = length(ℓ)
     set(x, batch(ℓ...), ntuple(i -> □, n))
 end
 
+
 Base.get(x::Nested, ℓ::Lens) = Nested(get(x.value, ℓ))
 
 Setfield.set(x::Nested, ℓ::Lens, v) = Nested(set(x.value, ℓ, v))
-
+Setfield.set(x::Nested, ℓ::Setfield.PropertyLens, v) = Nested(set(x.value, ℓ, v))
 Setfield.set(x::Nested, ℓ::Setfield.ComposedLens, v) = Nested(set(x.value, ℓ, v))
+
+function Base.setindex(x::Nested, i::Int, v)
+    ℓ = lenses(x)
+    @boundscheck i < length(ℓ)
+    @inbounds set(x, lenses(x)[i], v)
+end
