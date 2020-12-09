@@ -10,6 +10,8 @@ NamedTupleTools = "d9ec5142-1e00-5aa0-9d6a-321866360f50"
 Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 
 [compat]
+Kaleido = "0.2"
+BangBang = "0.3"
 julia = "1"
 
 [extras]
