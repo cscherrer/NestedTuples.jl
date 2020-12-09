@@ -21,7 +21,6 @@ Example:
 """
 function lenses end
 
-lenses(x::Nested) = lenses(x.value)
 
 @generated function lenses(x)
     ℓ = _lenses(x)
