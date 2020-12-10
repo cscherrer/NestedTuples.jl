@@ -1,7 +1,7 @@
 # This file is machine-generated - editing it directly is not advised
 
 [[BangBang]]
-deps = ["Compat", "ConstructionBase", "Future", "InitialValues", "LinearAlgebra", "Requires", "Setfield", "Tables", "ZygoteRules"]
+deps = ["Compat", "ConstructionBase", "Future", "InitialValues", "LinearAlgebra", "Requires", "Accessors", "Tables", "ZygoteRules"]
 git-tree-sha1 = "f42321255afc37da855b6cd9f2a1fc36c017ceee"
 uuid = "198e06fe-97b7-11e9-32a5-e1d131e6ad66"
 version = "0.3.29"
@@ -85,7 +85,7 @@ uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.1"
 
 [[Kaleido]]
-deps = ["Requires", "Setfield"]
+deps = ["Requires", "Accessors"]
 git-tree-sha1 = "8e958886022ce40dee34a70e4c5a8f6ebb1ac6a4"
 uuid = "caafb194-7e8d-11e9-2724-d5981dd0806d"
 version = "0.2.6"
@@ -123,7 +123,7 @@ uuid = "d9ec5142-1e00-5aa0-9d6a-321866360f50"
 version = "0.13.7"
 
 [[NestedTuples]]
-deps = ["BangBang", "Kaleido", "NamedTupleTools", "Setfield"]
+deps = ["BangBang", "Kaleido", "NamedTupleTools", "Accessors"]
 path = ".."
 uuid = "a734d2a7-8d68-409b-9419-626914d4061d"
 version = "0.1.0"
@@ -162,7 +162,7 @@ uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 [[Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 
-[[Setfield]]
+[[Accessors]]
 deps = ["ConstructionBase", "Future", "MacroTools", "Requires"]
 git-tree-sha1 = "d5640fc570fb1b6c54512f0bd3853866bd298b3e"
 uuid = "efcf1570-3423-57d1-acb7-fd33fddbac46"

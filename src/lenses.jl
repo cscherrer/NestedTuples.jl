@@ -1,5 +1,5 @@
 using BangBang
-using Setfield
+using Accessors
 
 export lenses
 
@@ -38,7 +38,7 @@ _lenses(nt::NamedTuple) = _lenses(nt, ())
 function _lenses(t::Tuple, acc)
     result = ()
     for (k,v) in enumerate(t)
-        acc_k = push!!(acc, Setfield.IndexLens((k,)))
+        acc_k = push!!(acc, Accessors.IndexLens((k,)))
         ℓ = _lenses(v, acc_k)
         result = append!!(result, ℓ)
     end
@@ -50,7 +50,7 @@ function _lenses(nt::NamedTuple, acc)
     for k in keys(nt)
         nt_k = getproperty(nt, k)
         # Add "breadcrumb" steps to the accumulator as we descend into the tree
-        acc_k = push!!(acc, Setfield.PropertyLens{k}())
+        acc_k = push!!(acc, Accessors.PropertyLens{k}())
         ℓ = _lenses(nt_k, acc_k)
         result = append!!(result, ℓ)
     end
@@ -59,5 +59,5 @@ end
 
 # When we reach a leaf node (an array), compose the steps to get a lens
 function _lenses(x, acc)
-    return (Setfield.compose(acc...),)
+    return (Accessors.compose(acc...),)
 end

@@ -30,7 +30,7 @@ Nested((a = Int64, b = (c = Array{Int64,1}, d = (Int64, Int64))))
 
 # Lenses
 
-It's often useful to replace the data in the leaves of the tree formed by a nested structure. For this we make it easy to compute the lenses to get to the leaves, using [`Setfield.jl`](https://github.com/jw3126/Setfield.jl):
+It's often useful to replace the data in the leaves of the tree formed by a nested structure. For this we make it easy to compute the lenses to get to the leaves, using [`Accessors.jl`](https://github.com/jw3126/Accessors.jl):
 ```julia
 julia> x
 Nested((a = 1, b = (c = [2, 3], d = (4, 5))))
@@ -58,4 +58,3 @@ In some cases the values can be distracting, and it's useful to have the structu
 julia> empty(x)
 Nested((a = □, b = (c = □, d = (□, □))))
 ```
-
