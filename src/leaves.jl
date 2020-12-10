@@ -1,54 +1,16 @@
-using BangBang
 using Accessors
 
-export _leaves
-
-function leaves end
-
-export cattuples
-
-"""
-    julia> cattuples((1,2),(3,4))
-    (1, 2, 3, 4)
-"""
-cattuples(a::Tuple,b::Tuple...) = (a..., cattuples(b...)...)
-cattuples(a::Tuple) = a
-
-export transposetuple
-
-"""
-    julia> transposetuple(((1,2),(3,4),(5,6)))
-    ((1, 3, 5), (2, 4, 6))
-"""
-function transposetuple(t)
-    return Tuple((getindex.(t,j) for j in 1:length(t[1])))
-end
+export leaves
 
 
-# _leaves(NT::Type{NamedTuple{K,V}}) where {K,V} = _leaves(fromtype(NT))
+leaves(x::Tuple) = cattuples(map(leaves, x))
+leaves(x::NamedTuple) = cattuples(map(leaves, values(x)))
+leaves(x) = (x,)
 
-# _leaves(T::Type{Tup}) where {Tup <: Tuple} = _leaves(fromtype(T))
-
-# _leaves(t::Tuple) = _leaves(t, ())
-
-# _leaves(nt::NamedTuple) = _leaves(nt, ())
-
-function _leaves(f, x::Tuple)
-    return _leaves.(f, x)
-end
-
-function _leaves(f, x::NamedTuple)
-    return NamedTuple{keys(x)}(_leaves(f, values(x)))
-end
-
-
-# When we reach a leaf node (an array), compose the steps to get a lens
-function _leaves(f, x)
-    return f(x)
-end
-
-export leaf_setter
-
+# leaves(x, y...) = (leaves(x)..., leaves(y)...)
+# leaves(x::Tuple) = leaves(x...)
+# leaves(x::NamedTuple) = leaves(values(x)...)
+# leaves(x) = (x,)
 
 using GeneralizedGenerated
 
@@ -84,4 +46,26 @@ function _leaf_setter(x)
     args = Expr(:tuple, names...)
 
     return :($args -> $body)
+end
+
+export Leaves
+
+struct Leaves end
+
+import Accessors
+
+Accessors.OpticStyle(::Leaves) = ModifyBased()
+
+function Accessors.modify(f, obj, ::Leaves) 
+    # vs = Flatten.flatten(obj, Array)
+    vs = leaves(obj)
+    args = f.(vs)
+    return leaf_setter(obj)(args...)
+end
+
+export ind
+
+function ind(x, j)
+    f(arr) = @inbounds arr[j]
+    modify(f, x, Leaves())
 end
