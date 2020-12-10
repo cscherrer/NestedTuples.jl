@@ -24,14 +24,6 @@ function transposetuple(t)
     return Tuple((getindex.(t,j) for j in 1:length(t[1])))
 end
 
-function leaf_setter(T)
-    template = _leaves(leaf -> gensym(), fromtype(T))
-    names = Symbol[]
-    _leaves(leaf -> push!(names, leaf), template)
-    return quote
-        $(names...) -> $template 
-    end
-end
 
 # _leaves(NT::Type{NamedTuple{K,V}}) where {K,V} = _leaves(fromtype(NT))
 
@@ -57,8 +49,15 @@ end
 
 export leaf_setter
 
-@generated function leaf_setter(x)
+
+using GeneralizedGenerated
+
+@gg function leaf_setter(x)
     x = fromtype(x)
+    _leaf_setter(x)
+end
+
+function _leaf_setter(x)
     names = []
 
     function f(t::Tuple)
@@ -67,7 +66,11 @@ export leaf_setter
 
     function f(t::NamedTuple)
         kvs = zip(keys(t), values(t))
-        Expr(:tuple, [Expr(:(=), k, v) for (k,v) in kvs]...)
+        args = []
+        for (k,v) in kvs
+            push!(args, Expr(:(=), k, v))
+        end
+        Expr(:tuple, args...)
     end
 
     function f(x)
@@ -80,7 +83,5 @@ export leaf_setter
 
     args = Expr(:tuple, names...)
 
-    return quote 
-        $args -> $body
-    end
+    return :($args -> $body)
 end
