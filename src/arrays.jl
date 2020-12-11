@@ -10,17 +10,18 @@ unwrap(ta::TupleArray) = getfield(ta, :data)
 unwrap(x) = x
 
 function TupleArray(x)
+    flattened = flatten(x)
+    @assert allequal(size.(flattened)...)
+
     T = typeof(modify(arr -> arr[1], x, Leaves()))
-    N = length(axes(flatten(x)[1]))
+    N = length(axes(flattened[1]))
     X = typeof(x)
     return TupleArray{T,N,X}(x)
 end
 
-import Base
+TupleArray{T}(x...) where {T} = leaf_setter(T)(x...)
 
-function Base.size(n::TupleArray)
-    return size(flatten(n.data)[1])
-end
+import Base
 
 # function Base.show(io, n::TupleArray)
 #     print(io, "TupleArray("
@@ -36,11 +37,23 @@ function Base.getindex(x::TupleArray, j)
         return @inbounds arr[j]
     end
 
-    modify(f, x, Leaves())
+    modify(f, unwrap(x), Leaves())
 end
 
+function Base.length(ta::TupleArray)
+    length(flatten(unwrap(ta))[1])
+end
 
+function Base.reshape(ta::TupleArray, newshape)
+    x = unwrap(ta)
+    TupleArray(modify(arr -> reshape(arr, newshape), x, Leaves()))
+end
 
+function Base.size(ta::TupleArray)
+    size(flatten(unwrap(ta))[1])
+end
+
+# TODO: Make this pass @code_warntype
 Base.getproperty(ta::TupleArray, k::Symbol) = maybewrap(getproperty(unwrap(ta), k))
 
 maybewrap(t::Tuple) = TupleArray(t)
@@ -48,3 +61,5 @@ maybewrap(t::NamedTuple) = TupleArray(t)
 maybewrap(t) = t
 
 flatten(ta::TupleArray) = TupleArray(flatten(unwrap(ta)))
+
+leaf_setter(ta::TupleArray) = TupleArray ∘ leaf_setter(unwrap(ta))
