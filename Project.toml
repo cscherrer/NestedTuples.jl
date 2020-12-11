@@ -10,6 +10,7 @@ GeneralizedGenerated = "6b9d7cbe-bcb9-11e9-073f-15a7a543e2eb"
 NamedTupleTools = "d9ec5142-1e00-5aa0-9d6a-321866360f50"
 
 [compat]
+Accessors = "0.1"
 BangBang = "0.3"
 NamedTupleTools = "0.13"
 julia = "1"
