@@ -10,7 +10,9 @@ flatten(x) = (x,)
 
 using GeneralizedGenerated
 
-@gg function leaf_setter(x)
+leaf_setter(::Type{T}) where {T} = leaf_setter(fromtype(T))
+
+@gg function leaf_setter(x::NamedTuple)
     x = fromtype(x)
     _leaf_setter(x)
 end
@@ -53,7 +55,7 @@ import Accessors
 Accessors.OpticStyle(::Leaves) = ModifyBased()
 
 function Accessors.modify(f, obj, ::Leaves) 
-    vs = flatten(obj)
+    vs = flatten(unwrap(obj))
     args = f.(vs)
     return leaf_setter(obj)(args...)
 end
