@@ -1,16 +1,17 @@
 using Accessors
 
-export leaves
+export flatten
 
 
-leaves(x::Tuple) = cattuples(map(leaves, x))
-leaves(x::NamedTuple) = cattuples(map(leaves, values(x)))
-leaves(x) = (x,)
+# flatten(x::Tuple) = cattuples(map(flatten, x))
+# flatten(x::NamedTuple) = cattuples(map(flatten, values(x)))
+# flatten(x) = (x,)
 
-# leaves(x, y...) = (leaves(x)..., leaves(y)...)
-# leaves(x::Tuple) = leaves(x...)
-# leaves(x::NamedTuple) = leaves(values(x)...)
-# leaves(x) = (x,)
+flatten(x, y...) = (flatten(x)..., flatten(y...)...)
+flatten(x::Tuple) = flatten(x...)
+flatten(x::NamedTuple) = flatten(values(x)...)
+flatten(x) = (x,)
+
 
 using GeneralizedGenerated
 
@@ -58,14 +59,7 @@ Accessors.OpticStyle(::Leaves) = ModifyBased()
 
 function Accessors.modify(f, obj, ::Leaves) 
     # vs = Flatten.flatten(obj, Array)
-    vs = leaves(obj)
+    vs = flatten(obj)
     args = f.(vs)
     return leaf_setter(obj)(args...)
-end
-
-export ind
-
-function ind(x, j)
-    f(arr) = @inbounds arr[j]
-    modify(f, x, Leaves())
 end

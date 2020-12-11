@@ -1,5 +1,9 @@
 module NestedTuples
 
+using Reexport
+
+@reexport using Accessors
+
 include("utils.jl")
 include("fold.jl")
 include("placeholder.jl")
@@ -8,5 +12,6 @@ include("lenses.jl")
 include("nested.jl")
 
 include("leaves.jl")
+include("arrays.jl")
 
 end
