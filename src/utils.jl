@@ -23,3 +23,7 @@ export transposetuple
 function transposetuple(t)
     return Tuple((getindex.(t,j) for j in 1:length(t[1])))
 end
+
+allequal(a) = true
+allequal(a,b) = a==b
+allequal(a,b,c...) = (a==b) && allequal(b,c...) 
