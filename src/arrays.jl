@@ -41,7 +41,7 @@ end
 
 
 
-Base.getproperty(x::TupleArray, k::Symbol) = maybewrap(getproperty(getfield(x,:data), k))
+Base.getproperty(ta::TupleArray, k::Symbol) = maybewrap(getproperty(unwrap(ta), k))
 
 maybewrap(t::Tuple) = TupleArray(t)
 maybewrap(t::NamedTuple) = TupleArray(t)
@@ -50,3 +50,5 @@ maybewrap(t) = t
 
 export getX
 getX(ta::TupleArray{T,N,X}) = X
+
+flatten(ta::TupleArray) = TupleArray(flatten(unwrap(ta)))

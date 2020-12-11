@@ -2,11 +2,6 @@ using Accessors
 
 export flatten
 
-
-# flatten(x::Tuple) = cattuples(map(flatten, x))
-# flatten(x::NamedTuple) = cattuples(map(flatten, values(x)))
-# flatten(x) = (x,)
-
 flatten(x, y...) = (flatten(x)..., flatten(y...)...)
 flatten(x::Tuple) = flatten(x...)
 flatten(x::NamedTuple) = flatten(values(x)...)
@@ -58,7 +53,6 @@ import Accessors
 Accessors.OpticStyle(::Leaves) = ModifyBased()
 
 function Accessors.modify(f, obj, ::Leaves) 
-    # vs = Flatten.flatten(obj, Array)
     vs = flatten(obj)
     args = f.(vs)
     return leaf_setter(obj)(args...)
