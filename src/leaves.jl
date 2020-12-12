@@ -10,10 +10,10 @@ flatten(x) = (x,)
 
 using GeneralizedGenerated
 
-leaf_setter(::Type{T}) where {T} = leaf_setter(fromtype(T))
+leaf_setter(::Type{T}) where {T} = leaf_setter(schema(T))
 
 @gg function leaf_setter(x::NamedTuple)
-    x = fromtype(x)
+    x = schema(x)
     _leaf_setter(x)
 end
 

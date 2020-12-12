@@ -27,9 +27,9 @@ function lenses end
     return ℓ
 end
 
-_lenses(NT::Type{NamedTuple{K,V}}) where {K,V} = _lenses(fromtype(NT))
+_lenses(NT::Type{NamedTuple{K,V}}) where {K,V} = _lenses(schema(NT))
 
-_lenses(T::Type{Tup}) where {Tup <: Tuple} = _lenses(fromtype(T))
+_lenses(T::Type{Tup}) where {Tup <: Tuple} = _lenses(schema(T))
 
 _lenses(t::Tuple) = _lenses(t, ())
 

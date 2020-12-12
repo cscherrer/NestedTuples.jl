@@ -22,9 +22,9 @@ julia> typeof(x)
 Nested{NamedTuple{(:a, :b),Tuple{Int64,NamedTuple{(:c, :d),Tuple{Array{Int64,1},Tuple{Int64,Int64}}}}}}
 ```
 
-This package introduces `fromtype` to rebuild the structure from its type:
+This package introduces `schema` to rebuild the structure from its type:
 ```julia
-julia> typeof(x) |> fromtype
+julia> typeof(x) |> schema
 Nested((a = Int64, b = (c = Array{Int64,1}, d = (Int64, Int64))))
 ```
 

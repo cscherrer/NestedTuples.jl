@@ -1,8 +1,9 @@
 export TupleArray
 
-struct TupleArray{T,N,X} 
+struct TupleArray{T,N,X} <: AbstractArray{T,N}
     data :: X
 end
+
 
 export unwrap
 
@@ -23,11 +24,10 @@ TupleArray{T}(x...) where {T} = leaf_setter(T)(x...)
 
 import Base
 
-# function Base.show(io, n::TupleArray)
-#     print(io, "TupleArray("
-
-#     print(io, ")"
-
+function Base.showarg(io::IO, ta::TupleArray{T}, toplevel) where T
+    print(io, "TupleArray")
+    toplevel && print(io, " with schema ", schema(T))
+end
 
 function Base.getindex(x::TupleArray, j)
         

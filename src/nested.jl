@@ -15,12 +15,12 @@ end
 
 lenses(x::Nested) = lenses(x.value)
 
-function fromtype(N::Type{Nested{X}}) where {X}
-    return Nested(fromtype(X))
+function schema(N::Type{Nested{X}}) where {X}
+    return Nested(schema(X))
 end
 
 @generated function Base.empty(x::Nested)
-    e = _empty(fromtype(x))
+    e = _empty(schema(x))
     return e
 end
 

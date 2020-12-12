@@ -3,12 +3,12 @@ using NamedTupleTools: namedtuple
 ntkeys(::Type{NamedTuple{K,V}}) where {K, V} = K
 ntvaltype(::Type{NamedTuple{K,V}}) where {K, V} = V
 
-export fromtype
+export schema
 
 """
-    fromtype(::Type)
+    schema(::Type)
     
-`fromtype` turns a type into a value that's easier to work with.
+`schema` turns a type into a value that's easier to work with.
 
 Example:
 
@@ -17,18 +17,22 @@ Example:
     julia> NT = typeof(nt)
     NamedTuple{(:a, :f),Tuple{NamedTuple{(:b, :c),Tuple{Array{Int64,1},NamedTuple{(:d, :e),Tuple{Array{Int64,1},Array{Int64,1}}}}},Array{Int64,1}}}
 
-    julia> fromtype(NT)
+    julia> schema(NT)
     (a = (b = Array{Int64,1}, c = (d = Array{Int64,1}, e = Array{Int64,1})), f = Array{Int64,1})
 """
-function fromtype end
+function schema end
 
-function fromtype(NT::Type{NamedTuple{names, T}}) where {names, T}
-    return namedtuple(ntkeys(NT), fromtype(ntvaltype(NT)))
+function schema(NT::Type{NamedTuple{names, T}}) where {names, T}
+    return namedtuple(ntkeys(NT), schema(ntvaltype(NT)))
 end
 
-function fromtype(TT::Type{T}) where {T <: Tuple} 
-    return fromtype.(Tuple(TT.types))
+function schema(TT::Type{T}) where {T <: Tuple} 
+    return schema.(Tuple(TT.types))
 end
 
+schema(t::T) where {T <: Tuple} = schema(T) 
 
-fromtype(T) = T
+schema(t::T) where {T <: NamedTuple} = schema(T) 
+
+
+schema(T) = T
