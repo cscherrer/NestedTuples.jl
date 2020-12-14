@@ -24,6 +24,8 @@ TupleArray{T}(x...) where {T} = leaf_setter(T)(x...)
 
 import Base
 
+Base.propertynames(ta::TupleArray) = propertynames(getfield(ta, :data))
+
 function Base.showarg(io::IO, ta::TupleArray{T}, toplevel) where T
     print(io, "TupleArray")
     toplevel && print(io, " with schema ", schema(T))
