@@ -32,12 +32,18 @@ end
 function Base.getindex(x::TupleArray, j)
         
     # TODO: Bounds checking doesn't affect performance, am I doing it right?
-    Base.@propagate_inbounds function f(arr)
-        @boundscheck all(j .∈ axes(arr))
+    function f(arr)
+        # @boundscheck all(j .∈ axes(arr))
         return @inbounds arr[j]
     end
 
     modify(f, unwrap(x), Leaves())
+end
+
+function Base.setindex!(a::TupleArray{T,N,X}, x::T, j::Int) where {T,N,X}
+    a = flatten(unwrap(a))
+    x = flatten(x)
+    setindex!.(a, x, j)
 end
 
 function Base.length(ta::TupleArray)
