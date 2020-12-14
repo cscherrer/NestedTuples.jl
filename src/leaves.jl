@@ -17,6 +17,12 @@ leaf_setter(::Type{T}) where {T} = leaf_setter(schema(T))
     _leaf_setter(x)
 end
 
+
+@gg function leaf_setter(x::Tuple)
+    x = schema(x)
+    _leaf_setter(x)
+end
+
 function _leaf_setter(x)
     names = []
 
