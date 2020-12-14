@@ -41,9 +41,9 @@ function Base.getindex(x::TupleArray, j)
 end
 
 function Base.setindex!(a::TupleArray{T,N,X}, x::T, j::Int) where {T,N,X}
-    a = flatten(unwrap(a))
-    x = flatten(x)
-    setindex!.(a, x, j)
+    a1 = flatten(unwrap(a))
+    x1 = flatten(x)
+    setindex!.(a1, x1, j)
 end
 
 function Base.length(ta::TupleArray)
