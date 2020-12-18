@@ -34,5 +34,4 @@ schema(t::T) where {T <: Tuple} = schema(T)
 
 schema(t::T) where {T <: NamedTuple} = schema(T) 
 
-
 schema(T) = T
