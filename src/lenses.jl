@@ -21,6 +21,7 @@ Example:
 """
 function lenses end
 
+lenses(T::Type) = lenses(schema(T))
 
 @generated function lenses(x)
     ℓ = _lenses(x)
