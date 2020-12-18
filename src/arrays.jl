@@ -71,3 +71,15 @@ maybewrap(t) = t
 flatten(ta::TupleArray) = TupleArray(flatten(unwrap(ta)))
 
 leaf_setter(ta::TupleArray) = TupleArray ∘ leaf_setter(unwrap(ta))
+
+function TupleArray{T, N}(::UndefInitializer, dims...) where {T,N}
+    @assert length(dims) == N
+
+    sT = schema(T)
+
+    f(t::Type) = Array{t, N}(undef, dims...)
+    f(x) = x
+    data = fold(f, sT)
+    X = typeof(data)
+    TupleArray{T,N,X}(data)
+end
