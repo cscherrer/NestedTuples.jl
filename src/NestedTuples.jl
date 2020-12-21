@@ -14,6 +14,7 @@ include("keysort.jl")
 
 include("exprify.jl")
 include("leaves.jl")
+include("leaves2.jl")
 include("arrays.jl")
 
 end
