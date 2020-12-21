@@ -10,6 +10,8 @@ flatten(x) = (x,)
 
 using GeneralizedGenerated
 
+export leaf_setter
+
 leaf_setter(::Type{T}) where {T} = leaf_setter(schema(T))
 
 @gg function leaf_setter(x::NamedTuple)
@@ -24,29 +26,7 @@ end
 end
 
 function _leaf_setter(x)
-    names = []
-
-    function f(t::Tuple)
-        Expr(:tuple, t...)
-    end
-
-    function f(t::NamedTuple)
-        kvs = zip(keys(t), values(t))
-        args = []
-        for (k,v) in kvs
-            push!(args, Expr(:(=), k, v))
-        end
-        Expr(:tuple, args...)
-    end
-
-    function f(x)
-        s = gensym()
-        push!(names, s)
-        return s
-    end
-
-    body = fold(f, x)
-
+    (names, body) = exprify(x)
     args = Expr(:tuple, names...)
 
     return :($args -> $body)
