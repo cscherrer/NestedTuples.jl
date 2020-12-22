@@ -52,7 +52,7 @@ function example_fold(x)
         return x
     end 
 
-    fold(f, x)
+    fold(f, x, pre)
 end
 
 
