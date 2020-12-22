@@ -77,8 +77,8 @@ function TupleArray{T, N}(::UndefInitializer, dims...) where {T,N}
 
     sT = schema(T)
 
-    f(t::Type) = Array{t, N}(undef, dims...)
-    f(x) = x
+    f(t::Type, path) = Array{t, N}(undef, dims...)
+    f(x, path) = x
     data = fold(f, sT)
     X = typeof(data)
     TupleArray{T,N,X}(data)

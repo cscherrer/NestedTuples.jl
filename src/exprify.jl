@@ -1,11 +1,11 @@
 function exprify(x::NamedTuple; rename=true)
     names = []
     
-    function f(t::Tuple)
+    function f(t::Tuple, path)
         Expr(:tuple, t...)
     end
     
-    function f(t::NamedTuple)
+    function f(t::NamedTuple, path)
         kvs = zip(keys(t), values(t))
         args = []
         for (k,v) in kvs
@@ -14,7 +14,8 @@ function exprify(x::NamedTuple; rename=true)
         Expr(:tuple, args...)
     end
     
-    function f(x)
+
+    function f(x, path)
         if rename
             name = gensym()
         else
