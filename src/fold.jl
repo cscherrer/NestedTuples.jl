@@ -1,52 +1,81 @@
 export fold
 
-function fold(f, t::Tuple, path=(); kwargs...)
-    inner = Tuple(fold(f, steppath(path)(k,v)...) for (k,v) in enumerate(t))
+pre_default(t, path=(); kwargs...) = t
+
+function fold(f, x::Tuple, pre=pre_default, path=(); kwargs...)
+    new_x = pre(x, path; kwargs...)
+    inner = Tuple(fold(f, steppath(pre, path)(k,v)...; kwargs...) for (k,v) in enumerate(new_x))
     return f(inner, path; kwargs...)
 end
 
-function fold(f, t::NamedTuple, path=(); kwargs...)
-    inner = Tuple((fold(f, steppath(path)(k,v)...) for (k,v) in pairs(t)))
-    return f(NamedTuple{keys(t)}(inner), path; kwargs...)
+function fold(f, x::NamedTuple, pre=pre_default, path=(); kwargs...)
+    new_x = pre(x, path; kwargs...)
+    inner = Tuple((fold(f, steppath(pre, path)(k,v)...; kwargs...) for (k,v) in pairs(new_x)))
+    return f(NamedTuple{keys(new_x)}(inner), path; kwargs...)
 end
 
-function fold(f, x, path=(); kwargs...)
-    return f(x, path; kwargs...)
+function fold(f, x, pre=pre_default, path=(); kwargs...)
+    new_x = pre(x, path; kwargs...)
+    return f(new_x, path; kwargs...)
 end
 
-function steppath(path)
-    f(k,v) = (v, (path..., k))
+function steppath(pre, path)
+    f(k,v) = (v, pre, (path..., k))
 end
 
 #######################################
 
 
-h(x::NamedTuple, path) = println("going up, path = ", path)
-h(x::Tuple, path) = println("going up, path =", path)
-h(x, path) = println("at leaf ", path)
 
 
-x = (a=(b=1,c=2),d=(e=(f=1,g=2)))
+function example_fold(x) 
+    pathsize = 10
+    function pre(x, path)
+        print("↓ path = ")
+        print(rpad(path, pathsize))
+        println("value = ", x)
+        return x
+    end 
 
-fold(h, x)
+    function f(x::Union{Tuple, NamedTuple}, path)
+        print("↑ path = ")
+        print(rpad(path, pathsize))
+        println("value = ", x)
+        return x
+    end 
+
+    function f(x, path)
+        print("↑ path = ")
+        print(rpad(path, pathsize))
+        print("value = ", x)
+        println(" ←-- LEAF")
+        return x
+    end 
+
+    fold(f, x)
+end
+
 
 #######################################
 
-q = quote end
+# q = quote end
 
-function f(x, path)
-    k = last(path)
-    push!(q.args, :($k = $x))
-end
+# function f(x, path)
+#     k = last(path)
+#     push!(q.args, :($k = $x))
+# end
 
-function f(x::NamedTuple, path)
-    k = last(path)
-    if isempty(path)
-        return q
-    else
-        push!(q.args, :($k = $x))
-    end
-end
+# function f(x::NamedTuple, path)
+#     k = last(path)
+#     if isempty(path)
+#         return q
+#     else
+#         push!(q.args, :($k = $x))
+#     end
+# end
 
 
-fold(f, x)
+# fold(pre, post, x)
+
+# function flat(x::NamedTuple)
+#     f(x::NamedTuple, path)
