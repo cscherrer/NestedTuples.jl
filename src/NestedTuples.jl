@@ -16,5 +16,5 @@ include("exprify.jl")
 include("leaves.jl")
 include("leaves2.jl")
 include("arrays.jl")
-
+include("lazymerge.jl")
 end
