@@ -1,9 +1,5 @@
 module NestedTuples
 
-using Reexport
-
-@reexport using Accessors
-
 include("utils.jl")
 include("fold.jl")
 include("placeholder.jl")
