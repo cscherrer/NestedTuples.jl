@@ -1,5 +1,5 @@
 function exprify(x::NamedTuple; rename=true)
-    names = []
+    names = Symbol[]
     
     function f(t::Tuple, path)
         Expr(:tuple, t...)
