@@ -4,6 +4,12 @@ struct Nested{T}
     value::T
 end
 
+# function Nested(nt)
+#     x = keysort(nt)
+#     T = typeof(x)
+#     Nested{T}(x)
+# end
+
 Nested(;kwargs...) = Nested((;kwargs...))
 
 import Base

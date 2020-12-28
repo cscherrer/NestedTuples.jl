@@ -1,6 +1,30 @@
 using NestedTuples
 
-export LazyMerge
+export lazymerge
+
+"""
+    lazymerge(x::NamedTuple, y::NamedTuple)
+
+Create a `LazyMerge` struct that behaves like a recursively merged NamedTuple,
+but is much faster to construct.
+
+In addition to the usual `getproperty`, this structure supports `get`ting by
+`Val` type:
+```
+(lm::LazyMerge).a == get(lm, Val(:a))
+```
+
+In some situatiuons, the latter can be much faster.
+
+The original use case for this is to support using named tuples as namespaces,
+especially in the context of probabilistic programming. There, it's common to
+have one (possibly nested) named tuple for observed data, and another for a
+proposal in an MCMC algorithm. The merge is therefore in the body of a loop
+that's executed many times.
+"""
+function lazymerge(x, y)
+    return LazyMerge(x,y)
+end
 
 struct LazyMerge{Nx,Ny,Tx,Ty}
     x::NamedTuple{Nx,Tx}
@@ -28,7 +52,7 @@ function Base.get(m::LazyMerge, Val_k::Val{k}) where {k}
     return _get(m, Val_k)
 end
 
-Base.propertynames(m) = union(propertynames(_getx(m)), propertynames(_gety(m)))
+Base.propertynames(m::LazyMerge) = union(propertynames(_getx(m)), propertynames(_gety(m)))
 
 _get_code(tx::Missing, ty::Missing, k) = :(error("type LazyMerge has no field ", k))
 

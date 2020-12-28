@@ -1,5 +1,22 @@
 using Accessors
 
+"""
+    keysort(nt::NamedTuple)
+
+Recursively sort the keys of a NamedTuple.
+
+EXAMPLE:
+```
+julia> x = randnt(3,2)
+(p = (z = :z, e = :e, s = :s), w = (g = :g, o = :o), g = (c = :c, f = :f, k = :k))
+
+julia> keysort(x)
+(g = (c = :c, f = :f, k = :k), p = (e = :e, s = :s, z = :z), w = (g = :g, o = :o))
+```
+"""
+function keysort end
+
+
 function _keysort(nt::NamedTuple{K,V}) where {K,V}
     π = sortperm(collect(K))
     k = K[π]
@@ -30,16 +47,3 @@ end
 
 keysort(t::T) where {T<:Tuple} = keysort.(t)
 keysort(x) = x
-
-
-export randnt
-
-function randnt(width, depth)
-    k = unique(Symbol.(rand('a':'z', width)))
-    if depth ≤ 1
-        return namedtuple(k)(k)
-    else
-        nts = Tuple((randnt(width, depth-1) for _ in 1:length(k)))
-        return namedtuple(k)(nts)
-    end
-end 
