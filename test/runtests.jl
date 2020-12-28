@@ -4,7 +4,7 @@ using Test
 @testset "NestedTuples.jl" begin
     x = (a = (a = :a, b = :b), q = (l = :l, u = :u))
 
-    @test NestedTuples.exprify(x; rename=false) == ([:b, :h, :d, :j], :((b = (b = b, h = h), x = (d = d, j = j))))
+    @test NestedTuples.exprify(x; rename=false) == ([:a, :b, :l, :u], :((a = (a = a, b = b), q = (l = l, u = u))))
     
     @test NestedTuples.flatten(x) == (:a, :b, :l, :u)
 
