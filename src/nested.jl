@@ -15,6 +15,7 @@ Nested(;kwargs...) = Nested((;kwargs...))
 import Base
 
 function Base.show(io::IO, x::Nested)
+    io = IOContext(io, :compact => true)
     print(io, "Nested(", x.value, ")")
 end
 

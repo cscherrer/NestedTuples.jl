@@ -27,6 +27,7 @@ import Base
 Base.propertynames(ta::TupleArray) = propertynames(getfield(ta, :data))
 
 function Base.showarg(io::IO, ta::TupleArray{T}, toplevel) where T
+    io = IOContext(io, :compact => true)
     print(io, "TupleArray")
     toplevel && print(io, " with schema ", schema(T))
 end

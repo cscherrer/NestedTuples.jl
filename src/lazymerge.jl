@@ -37,6 +37,7 @@ _gety(m::LazyMerge) = getfield(m, :y)
 import Base
 
 function Base.show(io::IO, m::LazyMerge)
+    io = IOContext(io, :compact => true)
     print(io, "LazyMerge(")
     print(io, _getx(m))
     print(io, ", ")
