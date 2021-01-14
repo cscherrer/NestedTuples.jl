@@ -22,6 +22,8 @@ Example:
 """
 function schema end
 
+schema(::NamedTuple{(), Tuple{}}) = NamedTuple()
+
 function schema(NT::Type{NamedTuple{names, T}}) where {names, T}
     return namedtuple(ntkeys(NT), schema(ntvaltype(NT)))
 end
