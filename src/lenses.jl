@@ -60,5 +60,5 @@ end
 
 # When we reach a leaf node (an array), compose the steps to get a lens
 function _lenses(x, acc)
-    return (⨟(acc...),)
+    return (opcompose(acc...),)
 end
