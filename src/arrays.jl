@@ -10,7 +10,13 @@ export unwrap
 unwrap(ta::TupleArray) = getfield(ta, :data)
 unwrap(x) = x
 
-function TupleArray(x)
+function TupleArray(a::AbstractArray{T,N}) where {T,N}
+    x = TupleArray{T,N}(undef, size(a)...)
+    x .= a
+    return x
+end
+
+function TupleArray(x::Union{Tuple, NamedTuple})
     flattened = flatten(x)
     @assert allequal(size.(flattened)...)
 
@@ -29,7 +35,12 @@ Base.propertynames(ta::TupleArray) = propertynames(getfield(ta, :data))
 function Base.showarg(io::IO, ta::TupleArray{T}, toplevel) where T
     io = IOContext(io, :compact => true)
     print(io, "TupleArray")
-    toplevel && print(io, " with schema ", schema(T))
+    toplevel && println(io, " with schema ", schema(T))
+end
+
+function Base.show(io::IO, ::MIME"text/plain", ta::TupleArray)
+    summary(io, ta)
+    print(io, summarize(ta))
 end
 
 function Base.getindex(x::TupleArray, j)
