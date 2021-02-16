@@ -8,53 +8,133 @@
 
 `NestedTuples` has some tools for making it easier to work with nested tuples and nested named tuples.
 
-To avoid type piracy, we introduce a new constructor `Nested`:
+# Random nested tuples
+
+`randnt` is useful for testing. Here's a random nested tuple with width 2 and depth 3:
 ```julia
-julia> x = Nested(a=1, b=(c=[2,3],d=(4,5)))
-Nested((a = 1, b = (c = [2, 3], d = (4, 5))))
+julia> nt = randnt(2,3)
+(w = (d = (p = :p, l = :l), e = (m = :m, v = :v)), q = (y = (r = :r, o = :o), g = (y = :y, h = :h)))
 ```
 
-# Type-level manipulations
+# Schema
 
-One nice property of (named) tuples is that there's so much information available in the types. This is especially important for generated functions (which we also use here to make things fast). But the types tend to be awkward to work with. For example,
+Does what it says on the tin:
 ```julia
-julia> typeof(x)
-Nested{NamedTuple{(:a, :b),Tuple{Int64,NamedTuple{(:c, :d),Tuple{Array{Int64,1},Tuple{Int64,Int64}}}}}}
+julia> schema(nt)
+(w = (d = (p = Symbol, l = Symbol), e = (m = Symbol, v = Symbol)), q = (y = (r = Symbol, o = Symbol), g = (y = Symbol, h = Symbol)))
 ```
 
-This package introduces `schema` to rebuild the structure from its type:
+`schema` is especially great for building generated functions on named tuples, because it works on types too:
+
 ```julia
-julia> typeof(x) |> schema
-Nested((a = Int64, b = (c = Array{Int64,1}, d = (Int64, Int64))))
+julia> schema(typeof(nt))
+(w = (d = (p = Symbol, l = Symbol), e = (m = Symbol, v = Symbol)), q = (y = (r = Symbol, o = Symbol), g = (y = Symbol, h = Symbol)))
 ```
 
-# Lenses
+# Flatten
 
-It's often useful to replace the data in the leaves of the tree formed by a nested structure. For this we make it easy to compute the lenses to get to the leaves, using [`Accessors.jl`](https://github.com/jw3126/Accessors.jl):
 ```julia
-julia> x
-Nested((a = 1, b = (c = [2, 3], d = (4, 5))))
-
-julia> ℓ = lenses(x)
-((@lens _.a), (@lens _.b.c), (@lens _.b.d[1]), (@lens _.b.d[2]))
-
-julia> set(x, ℓ[2], randn(3))
-Nested((a = 1, b = (c = [2.6670790234937862, 1.2514402388838717, -0.9436148268973016], d = (4, 5))))
+julia> flatten(nt)
+(:p, :l, :m, :v, :r, :o, :y, :h)
 ```
 
-We can also use [`Kaleido.jl`](https://github.com/tkf/Kaleido.jl) to set all of the leaves at once:
-```julia
-julia> b = batch(lenses(x)...)
-IndexBatchLens(:a, :b) ∘ 〈◻[1] ∘ Kaleido.SingletonLens(), ◻[2] ∘ IndexBatchLens(:c, :d) ∘ 〈◻[1] ∘ Kaleido.SingletonLens(), ◻[2] ∘ 〈◻[1], ◻[2]〉〉 ∘ FlatLens(1, 2)〉 ∘ FlatLens(1, 3)
+# Recursive `map`
 
-julia> set(x, b, (1,2,3,4))
-Nested((a = 1, b = (c = 2, d = (3, 4))))
+```julia
+julia> rmap(String, nt)
+(w = (d = (p = "p", l = "l"), e = (m = "m", v = "v")), q = (y = (r = "r", o = "o"), g = (y = "y", h = "h")))
 ```
 
-# PlaceHolders
+# Recursively sort keys
 
-In some cases the values can be distracting, and it's useful to have the structure "by itself". For that we have `PlaceHolder`s, which render as □. Using this, we can get
+Use `keysort` for this.
+
 ```julia
-julia> empty(x)
-Nested((a = □, b = (c = □, d = (□, □))))
+julia> @btime keysort($nt)
+  0.020 ns (0 allocations: 0 bytes)
+(q = (g = (h = :h, y = :y), y = (o = :o, r = :r)), w = (d = (l = :l, p = :p), e = (m = :m, v = :v)))
 ```
+
+# Leaf setter
+
+`leaf_setter` takes a nested named tuple and builds a function that sets the values on the leaves.
+
+```julia
+julia> f = leaf_setter(nt)
+function = (##777, ##778, ##779, ##780, ##781, ##782, ##783, ##784;) -> begin
+    begin
+        (w = (d = (p = var"##777", l = var"##778"), e = (m = var"##779", v = var"##780")), q = (y = (r = var"##781", o = var"##782"), g = (y = var"##783", h = var"##784")))
+    end
+end
+
+julia> @btime $f(1:8...)
+  0.020 ns (0 allocations: 0 bytes)
+(w = (d = (p = 1, l = 2), e = (m = 3, v = 4)), q = (y = (r = 5, o = 6), g = (y = 7, h = 8)))
+```
+
+# Fold
+
+`fold` is a "structural fold". You give it a function `f`, and the result will apply `f` at the leaves, and then combine leaves recursively also using `f`. It also allows an optional third argument as a `pre` function to be applied on the way down to the leaves. This is probably clearer from an example:
+
+```julia
+function example_fold(x) 
+    pathsize = 10
+    function pre(x, path)
+        print("↓ path = ")
+        print(rpad(path, pathsize))
+        println("value = ", x)
+        return x
+    end 
+
+    function f(x::Union{Tuple, NamedTuple}, path)
+        print("↑ path = ")
+        print(rpad(path, pathsize))
+        println("value = ", x)
+        return x
+    end 
+
+    function f(x, path)
+        print("↑ path = ")
+        print(rpad(path, pathsize))
+        print("value = ", x)
+        println(" ←-- LEAF")
+        return x
+    end 
+
+    fold(f, x, pre)
+end
+
+julia> example_fold(nt)
+↓ path = ()        value = (w = (d = (p = :p, l = :l), e = (m = :m, v = :v)), q = (y = (r = :r, o = :o), g = (y = :y, h = :h)))
+↓ path = (:w,)     value = (d = (p = :p, l = :l), e = (m = :m, v = :v))
+↓ path = (:w, :d)  value = (p = :p, l = :l)
+↓ path = (:w, :d, :p)value = p
+↑ path = (:w, :d, :p)value = p ←-- LEAF
+↓ path = (:w, :d, :l)value = l
+↑ path = (:w, :d, :l)value = l ←-- LEAF
+↑ path = (:w, :d)  value = (p = :p, l = :l)
+↓ path = (:w, :e)  value = (m = :m, v = :v)
+↓ path = (:w, :e, :m)value = m
+↑ path = (:w, :e, :m)value = m ←-- LEAF
+↓ path = (:w, :e, :v)value = v
+↑ path = (:w, :e, :v)value = v ←-- LEAF
+↑ path = (:w, :e)  value = (m = :m, v = :v)
+↑ path = (:w,)     value = (d = (p = :p, l = :l), e = (m = :m, v = :v))
+↓ path = (:q,)     value = (y = (r = :r, o = :o), g = (y = :y, h = :h))
+↓ path = (:q, :y)  value = (r = :r, o = :o)
+↓ path = (:q, :y, :r)value = r
+↑ path = (:q, :y, :r)value = r ←-- LEAF
+↓ path = (:q, :y, :o)value = o
+↑ path = (:q, :y, :o)value = o ←-- LEAF
+↑ path = (:q, :y)  value = (r = :r, o = :o)
+↓ path = (:q, :g)  value = (y = :y, h = :h)
+↓ path = (:q, :g, :y)value = y
+↑ path = (:q, :g, :y)value = y ←-- LEAF
+↓ path = (:q, :g, :h)value = h
+↑ path = (:q, :g, :h)value = h ←-- LEAF
+↑ path = (:q, :g)  value = (y = :y, h = :h)
+↑ path = (:q,)     value = (y = (r = :r, o = :o), g = (y = :y, h = :h))
+↑ path = ()        value = (w = (d = (p = :p, l = :l), e = (m = :m, v = :v)), q = (y = (r = :r, o = :o), g = (y = :y, h = :h)))
+(w = (d = (p = :p, l = :l), e = (m = :m, v = :v)), q = (y = (r = :r, o = :o), g = (y = :y, h = :h)))
+```
+
