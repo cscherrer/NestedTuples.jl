@@ -55,6 +55,10 @@ julia> @btime keysort($nt)
 (q = (g = (h = :h, y = :y), y = (o = :o, r = :r)), w = (d = (l = :l, p = :p), e = (m = :m, v = :v)))
 ```
 
+# Lazy Merge
+
+Recursively merging named tuples can be expensive. `lazymerge(nt1, nt2)` creates a `LazyMerge` struct that behaves in the same way but can be much faster. 
+
 # Leaf setter
 
 `leaf_setter` takes a nested named tuple and builds a function that sets the values on the leaves.
