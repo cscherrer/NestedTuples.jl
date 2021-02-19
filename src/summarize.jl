@@ -28,8 +28,11 @@ struct RealSummary <: Summary
     σ :: Float64
 end
 
-summarize(x::AbstractArray{<:Real}) = RealSummary(mean_and_std(x)...)
+summarize(x::ElasticVector{<:Real}) = RealSummary(mean_and_std(x)...)
 
+function summarize(x::ArrayOfSimilarArrays)
+    [RealSummary(μ,σ) for (μ,σ) in mean_and_std.(x')]
+end
 
 function Base.show(io::IO, s::RealSummary)
     io = IOContext(io, :compact => true)
