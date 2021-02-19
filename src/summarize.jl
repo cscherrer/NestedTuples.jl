@@ -28,13 +28,25 @@ struct RealSummary <: Summary
     σ :: Float64
 end
 
-summarize(x::ElasticVector{<:Real}) = RealSummary(mean_and_std(x)...)
+function Base.show(io::IO, s::RealSummary)
+    io = IOContext(io, :compact => true)
+    σ = round(s.σ, sigdigits=2)
+    μdigits = max(2, ceil(Int, log10(2) * (exponent(s.μ) - exponent(σ))) + 2)
+    μ = round(s.μ, sigdigits = μdigits)
+    print(io, μ, " ± ", σ)
+end
+
+summarize(x::AbstractVector{<:Real}) = RealSummary(mean_and_std(x)...)
 
 function summarize(x::ArrayOfSimilarArrays)
+    
     [RealSummary(μ,σ) for (μ,σ) in mean_and_std.(x')]
 end
 
-function Base.show(io::IO, s::RealSummary)
-    io = IOContext(io, :compact => true)
-    print(io, s.μ, " ± ", s.σ)
+export foo
+function foo(x)
+    s = RealSummary(mean_and_std(x)...)
+    σ = round(s.σ, sigdigits=2)
+    μ = round(s.μ, sigdigits=exponent(s.μ)-exponent(σ)+2, base=2)
+    return(μ,σ)
 end
