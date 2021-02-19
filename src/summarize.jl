@@ -4,9 +4,9 @@ export summarize
 
 abstract type Summary end
 
-summarize(nt::NamedTuple) = mapnt(summarize, nt)
+summarize(nt::NamedTuple) = rmap(summarize, nt)
 
-summarize(ta::TupleArray) = summarize(getfield(ta, :data))
+summarize(tv::TupleVector) = summarize(unwrap(tv))
 
 
 ###############################################################################

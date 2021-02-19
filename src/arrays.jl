@@ -1,49 +1,69 @@
-export TupleArray
-
-struct TupleArray{T,N,X} <: AbstractArray{T,N}
+export TupleVector
+using ElasticArrays, ArraysOfArrays
+struct TupleVector{T,X} <: AbstractVector{T}
     data :: X
 end
 
+struct EmptyTupleVector{T} end
 
 export unwrap
 
-unwrap(ta::TupleArray) = getfield(ta, :data)
+unwrap(tv::TupleVector) = getfield(tv, :data)
 unwrap(x) = x
 
-function TupleArray(a::AbstractArray{T,N}) where {T,N}
-    x = TupleArray{T,N}(undef, size(a)...)
+function TupleVector(a::AbstractVector{T}) where {T}
+    a1 = first(a)
+
+    x = TupleVector{T}(undef, a1, length(a))
     x .= a
     return x
 end
 
-function TupleArray(x::Union{Tuple, NamedTuple})
-    flattened = flatten(x)
-    @assert allequal(size.(flattened)...)
+function TupleVector(::UndefInitializer, x::T, n::Int) where {T<:NamedTuple}
 
-    T = typeof(modify(arr -> arr[1], x, Leaves()))
-    N = length(axes(flattened[1]))
-    X = typeof(x)
-    return TupleArray{T,N,X}(x)
+    function initialize(n::Int)
+        f(x::T, path) where {T} = ElasticVector{T}(undef, n)
+
+        f(x::DenseArray{T,N}, path) where {T,N} = nestedview(ElasticArray{T,N+1}(undef, size(x)..., n), N)
+
+        f(x::Union{Tuple, NamedTuple}, path) = x
+
+        return f 
+    end
+
+    data = fold(initialize(n), x)
+
+    return TupleVector{T, typeof(data)}(data)
 end
 
-TupleArray{T}(x...) where {T} = leaf_setter(T)(x...)
+# function TupleVector(x::Union{Tuple, NamedTuple})
+#     flattened = flatten(x)
+#     @assert allequal(size.(flattened)...)
+
+#     T = typeof(modify(arr -> arr[1], x, Leaves()))
+#     N = length(axes(flattened[1]))
+#     X = typeof(x)
+#     return TupleVector{T,X}(x)
+# end
+
+# TupleVector{T}(x...) where {T} = leaf_setter(T)(x...)
 
 import Base
 
-Base.propertynames(ta::TupleArray) = propertynames(getfield(ta, :data))
+Base.propertynames(tv::TupleVector) = propertynames(unwrap(tv))
 
-function Base.showarg(io::IO, ta::TupleArray{T}, toplevel) where T
+function Base.showarg(io::IO, tv::TupleVector{T}, toplevel) where T
     io = IOContext(io, :compact => true)
-    print(io, "TupleArray")
+    print(io, "TupleVector")
     toplevel && println(io, " with schema ", schema(T))
 end
 
-function Base.show(io::IO, ::MIME"text/plain", ta::TupleArray)
-    summary(io, ta)
-    print(io, summarize(ta))
-end
+# function Base.show(io::IO, ::MIME"text/plain", tv::TupleVector)
+#     summary(io, tv)
+#     print(io, summarize(tv))
+# end
 
-function Base.getindex(x::TupleArray, j)
+function Base.getindex(x::TupleVector, j)
         
     # TODO: Bounds checking doesn't affect performance, am I doing it right?
     function f(arr)
@@ -54,44 +74,74 @@ function Base.getindex(x::TupleArray, j)
     modify(f, unwrap(x), Leaves())
 end
 
-function Base.setindex!(a::TupleArray{T,N,X}, x::T, j::Int) where {T,N,X}
-    a1 = flatten(unwrap(a))
-    x1 = flatten(x)
-    setindex!.(a1, x1, j)
+# function Base.setindex!(a::TupleVector{T,X}, x::T, j::Int) where {T,X}
+#     a1 = flatten(unwrap(a))
+#     x1 = flatten(x)
+#     setindex!.(a1, x1, j)
+# end
+
+function Base.length(tv::TupleVector)
+    length(flatten(unwrap(tv))[1])
 end
 
-function Base.length(ta::TupleArray)
-    length(flatten(unwrap(ta))[1])
-end
-
-function Base.reshape(ta::TupleArray, newshape)
-    x = unwrap(ta)
-    TupleArray(modify(arr -> reshape(arr, newshape), x, Leaves()))
-end
-
-function Base.size(ta::TupleArray)
-    size(flatten(unwrap(ta))[1])
+function Base.size(tv::TupleVector)
+    size(flatten(unwrap(tv))[1])
 end
 
 # TODO: Make this pass @code_warntype
-Base.getproperty(ta::TupleArray, k::Symbol) = maybewrap(getproperty(unwrap(ta), k))
+Base.getproperty(tv::TupleVector, k::Symbol) = maybewrap(getproperty(unwrap(tv), k))
 
-maybewrap(t::Tuple) = TupleArray(t)
-maybewrap(t::NamedTuple) = TupleArray(t)
+maybewrap(t::Tuple) = TupleVector(t)
+maybewrap(t::NamedTuple) = TupleVector(t)
 maybewrap(t) = t
 
-flatten(ta::TupleArray) = TupleArray(flatten(unwrap(ta)))
+# flatten(tv::TupleVector) = TupleVector(flatten(unwrap(tv)))
 
-leaf_setter(ta::TupleArray) = TupleArray ∘ leaf_setter(unwrap(ta))
+# leaf_setter(tv::TupleVector) = TupleVector ∘ leaf_setter(unwrap(tv))
 
-function TupleArray{T, N}(::UndefInitializer, dims...) where {T,N}
-    @assert length(dims) == N
+# function TupleVector{T}(::UndefInitializer) where {T}
+#     return EmptyTupleVector{T}()
+# end
 
-    sT = schema(T)
 
-    f(t::Type, path) = Array{t, N}(undef, dims...)
-    f(x, path) = x
-    data = fold(f, sT)
-    X = typeof(data)
-    TupleArray{T,N,X}(data)
+# function Base.push!(::EmptyTupleVector{T}, nt::NamedTuple) where {T}
+#     function f(x::t, path) where {t}
+#         ea = ElasticArray{t}(undef, 0)
+#         push!(ea, x)
+#         return ea
+#     end
+
+#     function f(x::DenseArray{t}, path) where {t}
+#         ea = ElasticArray{t}(undef, size(x)..., 0)
+#         nv = nestedview(ea, 1)
+#         push!(nv, x)
+#         return nv
+#     end
+
+#     data = fold(f, nt)
+#     X = typeof(data)
+#     TupleVector{T,X}(data)
+# end
+
+export tvcore_init
+
+# function tvcore_init(x::Vector)
+#     return ElasticVector(x)
+# end
+
+# function tvcore_init(x::Vector{A}) where {T, N, A <: DenseArray{T,N}}
+#     x1 = first(x)
+#     nv = nestedview(ElasticArray{T,N+1}(undef, size(x1)..., length(x)), N)
+#     for (xj, nvj) in zip(x,nv)
+#         nvj .= xj
+#     end
+#     return nv
+# end
+
+function tvcore_init(exemplar::T, n::Int) where {T}
+    ElasticVector{T}(undef, n)
+end
+
+function tvcore_init(examplar::DenseArray{T,N}, n::Int) where {T,N}
+    nestedview(ElasticArray{T,N+1}(undef, size(examplar)..., n), N)
 end
