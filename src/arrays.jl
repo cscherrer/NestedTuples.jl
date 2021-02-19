@@ -118,26 +118,3 @@ maybewrap(t) = t
 #     X = typeof(data)
 #     TupleVector{T,X}(data)
 # end
-
-export tvcore_init
-
-# function tvcore_init(x::Vector)
-#     return ElasticVector(x)
-# end
-
-# function tvcore_init(x::Vector{A}) where {T, N, A <: DenseArray{T,N}}
-#     x1 = first(x)
-#     nv = nestedview(ElasticArray{T,N+1}(undef, size(x1)..., length(x)), N)
-#     for (xj, nvj) in zip(x,nv)
-#         nvj .= xj
-#     end
-#     return nv
-# end
-
-function tvcore_init(exemplar::T, n::Int) where {T}
-    ElasticVector{T}(undef, n)
-end
-
-function tvcore_init(examplar::DenseArray{T,N}, n::Int) where {T,N}
-    nestedview(ElasticArray{T,N+1}(undef, size(examplar)..., n), N)
-end
