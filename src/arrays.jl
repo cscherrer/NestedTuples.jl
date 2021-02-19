@@ -54,10 +54,10 @@ function Base.showarg(io::IO, tv::TupleVector{T}, toplevel) where T
     toplevel && println(io, " with schema ", schema(T))
 end
 
-# function Base.show(io::IO, ::MIME"text/plain", tv::TupleVector)
-#     summary(io, tv)
-#     print(io, summarize(tv))
-# end
+function Base.show(io::IO, ::MIME"text/plain", tv::TupleVector)
+    summary(io, tv)
+    print(io, summarize(tv))
+end
 
 function Base.getindex(x::TupleVector, j)
         
