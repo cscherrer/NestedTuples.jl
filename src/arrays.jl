@@ -22,16 +22,12 @@ end
 function TupleVector(::UndefInitializer, x::T, n::Int) where {T<:NamedTuple}
 
     function initialize(n::Int)
-        f(x::T, path) where {T} = ElasticVector{T}(undef, n)
-
-        f(x::DenseArray{T,N}, path) where {T,N} = nestedview(ElasticArray{T,N+1}(undef, size(x)..., n), N)
-
-        f(x::Union{Tuple, NamedTuple}, path) = x
-
+        f(x::T) where {T} = ElasticVector{T}(undef, n)
+        f(x::DenseArray{T,N}) where {T,N} = nestedview(ElasticArray{T,N+1}(undef, size(x)..., n), N)
         return f 
     end
 
-    data = fold(initialize(n), x)
+    data = rmap(initialize(n), x)
 
     return TupleVector{T, typeof(data)}(data)
 end
