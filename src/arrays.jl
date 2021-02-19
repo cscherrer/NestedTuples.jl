@@ -70,11 +70,13 @@ function Base.getindex(x::TupleVector, j)
     modify(f, unwrap(x), Leaves())
 end
 
-# function Base.setindex!(a::TupleVector{T,X}, x::T, j::Int) where {T,X}
-#     a1 = flatten(unwrap(a))
-#     x1 = flatten(x)
-#     setindex!.(a1, x1, j)
-# end
+function Base.setindex!(a::TupleVector{T,X}, x::T, j::Int) where {T,X}
+    a1 = flatten(unwrap(a))
+    x1 = flatten(x)
+
+    setindex!.(a1, x1, j)
+    return a
+end
 
 function Base.length(tv::TupleVector)
     length(flatten(unwrap(tv))[1])
