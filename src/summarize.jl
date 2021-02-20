@@ -53,5 +53,5 @@ end
 summarize(x::AbstractVector{<:Real}) = RealSummary(mean_and_std(x)...)
 
 function summarize(x::ArrayOfSimilarArrays)
-    [RealSummary(μ,σ) for (μ,σ) in mean_and_std.(x')]
+    [RealSummary(μ,σ) for (μ,σ) in zip(mean_and_std(x)...)]
 end
