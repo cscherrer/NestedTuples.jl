@@ -120,3 +120,7 @@ maybewrap(t) = t
 #     X = typeof(data)
 #     TupleVector{T,X}(data)
 # end
+
+function Base.resize!(tv::TupleVector, n::Int)
+    rmap(x -> resize!(x, n), unwrap(tv))
+end
