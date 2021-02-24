@@ -46,3 +46,6 @@ function randnt(width, depth)
         return namedtuple(k)(nts)
     end
 end 
+
+export unwrap
+unwrap(x) = x
