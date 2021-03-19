@@ -1,7 +1,7 @@
 name = "NestedTuples"
 uuid = "a734d2a7-8d68-409b-9419-626914d4061d"
 authors = ["Chad Scherrer <chad.scherrer@gmail.com> and contributors"]
-version = "0.2.0"
+version = "0.3.0"
 
 [deps]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
@@ -16,7 +16,7 @@ Accessors = "0.1"
 ArrayInterface = "3"
 ArraysOfArrays = "0.5"
 BangBang = "0.3"
-GeneralizedGenerated = "0.2"
+GeneralizedGenerated = "0.3"
 NamedTupleTools = "0.13"
 julia = "1.4"
 
