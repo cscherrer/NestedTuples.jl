@@ -47,3 +47,9 @@ end
 
 keysort(t::T) where {T<:Tuple} = keysort.(t)
 keysort(x) = x
+
+function keysort(lm::LazyMerge)
+    x = getfield(lm, :x)
+    y = getfield(lm, :y)
+    return lazymerge(keysort(x), keysort(y))
+end
