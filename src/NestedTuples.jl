@@ -1,6 +1,7 @@
 module NestedTuples
 
 include("utils.jl")
+include("lazymerge.jl")
 include("rmap.jl")
 include("fold.jl")
 include("placeholder.jl")
@@ -12,6 +13,5 @@ include("exprify.jl")
 include("leaves.jl")
 include("leaves2.jl")
 # include("arrays.jl")
-include("lazymerge.jl")
 # include("summarize.jl")
 end
