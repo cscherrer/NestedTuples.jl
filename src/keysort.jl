@@ -17,6 +17,8 @@ julia> keysort(x)
 function keysort end
 
 
+_keysort(nt::NamedTuple{(), Tuple{}}) = nt
+
 function _keysort(nt::NamedTuple{K,V}) where {K,V}
     π = sortperm(collect(K))
     k = K[π]
