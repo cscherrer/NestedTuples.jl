@@ -18,6 +18,19 @@ end
     q
 end
 
+"""
+    @with(ctx, body)
+
+Compute `body` using the context `ctx`. `ctx` is typically a named tuple, but the only requirement is that it supports `Base.getproperty`.
+
+This macro works by creating a type-level representation of `body` and passing this to a "generalized generated" function that dispatches on the types. So, for example, `@with((x=1, y=2), x+y)` will create a local `nt = (x=1, y=2)` and generate
+
+```
+x = getproperty(nt, :x)
+y = getproperty(nt, :y)
+x + y
+```
+"""
 macro with(nt, ex)
     tle = NestedTuples.TypelevelExpr(ex)
     quote
