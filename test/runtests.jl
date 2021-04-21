@@ -13,4 +13,10 @@ using Test
     @test NestedTuples.leaf_setter(x)(1,2,3,4) == (a = (a = 1, b = 2), q = (l = 3, u = 4))
 
     @test NestedTuples.schema(x) == (a = (a = Symbol, b = Symbol), q = (l = Symbol, u = Symbol))
+
+    @test NestedTuples.@with((x=1, y=2), x+y) == 3
+
+    @test let nt = (x=1, y=(a=2, b=3))
+        @with(nt, (x + @with(y, a + b))) == 6
+    end
 end

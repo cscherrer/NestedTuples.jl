@@ -8,6 +8,34 @@
 
 `NestedTuples` has some tools for making it easier to work with nested tuples and nested named tuples.
 
+# Named tuples as contexts
+
+We can do this with `@with`, similar to [StaticModules.jl](https://github.com/MasonProtter/StaticModules.jl) (and identical syntax):
+
+```julia
+julia> @with((x=1, y=2), x+y)
+3
+```
+
+These can also be nested, with good performance:
+```julia
+julia> nt = (x=1, y=(a=2, b=3))
+(x = 1, y = (a = 2, b = 3))
+
+julia> @with nt begin
+           x + @with y (a+b)
+       end
+6
+
+julia> @btime @with $nt begin
+              x + @with y (a + b)
+              end
+  0.010 ns (0 allocations: 0 bytes)
+6
+```
+
+Note that we haven't yet done any rigorous comparison to StaticModules. The main reason for the alternative implementation is that we already have GeneralizedGenerated.jl as a dependency, and leveraging this makes the new implementation very simple.
+
 # Random nested tuples
 
 `randnt` is useful for testing. Here's a random nested tuple with width 2 and depth 3:
@@ -141,4 +169,3 @@ julia> example_fold(nt)
 ↑ path = ()        value = (w = (d = (p = :p, l = :l), e = (m = :m, v = :v)), q = (y = (r = :r, o = :o), g = (y = :y, h = :h)))
 (w = (d = (p = :p, l = :l), e = (m = :m, v = :v)), q = (y = (r = :r, o = :o), g = (y = :y, h = :h)))
 ```
-
