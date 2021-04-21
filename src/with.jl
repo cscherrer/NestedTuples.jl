@@ -32,8 +32,8 @@ x + y
 ```
 """
 macro with(nt, ex)
-    tle = NestedTuples.TypelevelExpr(ex)
+    tle = TypelevelExpr(ex)
     quote
-        NestedTuples.with($nt, $tle)
-    end |> esc
+        with($(esc(nt)), $tle)
+    end 
 end
