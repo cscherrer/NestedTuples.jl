@@ -48,6 +48,7 @@ julia> @with nt begin
        x^2 + y
        end
 7
+```
 
 This can be extended to other types and a different number of arguments. For example,
 
