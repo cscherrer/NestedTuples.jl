@@ -77,6 +77,8 @@ julia> @with nt [1,2,3] begin
  10
 ```
 
+Of course, either of these would be type piracy, but there's lots of room to extend this on your own types. Please file an issue if you have suggestions for `with` methods on `Base` types.
+
 # Random nested tuples
 
 `randnt` is useful for testing. Here's a random nested tuple with width 2 and depth 3:
