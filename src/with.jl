@@ -20,6 +20,22 @@ with(m::Module, nt::NamedTuple, ex::Expr) = with(m, nt, TypelevelExpr(ex))
     @under_global :m q
 end
 
+
+@gg function with(m::Module, nt1::NamedTuple{N1}, nt2::NamedTuple{N2}, ::TypelevelExpr{E}) where {N1,N2,E}
+    ex = from_type(E)
+    q = quote end
+    for x in N1
+        xname = QuoteNode(x)
+        push!(q.args, :($x = Base.getproperty(nt1, $xname)))
+    end
+    for x in N2
+        xname = QuoteNode(x)
+        push!(q.args, :($x = Base.getproperty(nt2, $xname)))
+    end
+    push!(q.args, ex)
+    @under_global :m q
+end
+
 """
     @with(ctx..., body)
 
