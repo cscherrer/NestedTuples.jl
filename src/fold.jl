@@ -28,32 +28,32 @@ end
 
 
 
-function example_fold(x) 
-    pathsize = 10
-    function pre(x, path)
-        print("↓ path = ")
-        print(rpad(path, pathsize))
-        println("value = ", x)
-        return x
-    end 
+# function example_fold(x) 
+#     pathsize = 10
+#     function pre(x, path)
+#         print("↓ path = ")
+#         print(rpad(path, pathsize))
+#         println("value = ", x)
+#         return x
+#     end 
 
-    function f(x::Union{Tuple, NamedTuple}, path)
-        print("↑ path = ")
-        print(rpad(path, pathsize))
-        println("value = ", x)
-        return x
-    end 
+#     function f(x::Union{Tuple, NamedTuple}, path)
+#         print("↑ path = ")
+#         print(rpad(path, pathsize))
+#         println("value = ", x)
+#         return x
+#     end 
 
-    function f(x, path)
-        print("↑ path = ")
-        print(rpad(path, pathsize))
-        print("value = ", x)
-        println(" ←-- LEAF")
-        return x
-    end 
+#     function f(x, path)
+#         print("↑ path = ")
+#         print(rpad(path, pathsize))
+#         print("value = ", x)
+#         println(" ←-- LEAF")
+#         return x
+#     end 
 
-    fold(f, x, pre)
-end
+#     fold(f, x, pre)
+# end
 
 
 #######################################
