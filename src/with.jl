@@ -7,7 +7,9 @@ struct TypelevelExpr{T}
     TypelevelExpr(expr::Expr) = new{to_type(expr)}(expr)
 end
 
-@gg function with(nt::NamedTuple{N,T}, ::TypelevelExpr{E}) where {N,T,E}
+with(m::Module, nt::NamedTuple, ex::Expr) = with(m, nt, TypelevelExpr(ex))
+
+@gg function with(m::Module, nt::NamedTuple{N,T}, ::TypelevelExpr{E}) where {N,T,E}
     ex = from_type(E)
     q = quote end
     for x in N
@@ -15,7 +17,7 @@ end
         push!(q.args, :($x = Base.getproperty(nt, $xname)))
     end
     push!(q.args, ex)
-    q
+    @under_global :m q
 end
 
 """
@@ -65,6 +67,6 @@ macro with(args...)
 
     tle = TypelevelExpr(ex)
     quote
-        with($(ctx...), $tle)
+        with($__module__, $(ctx...), $tle)
     end 
 end
