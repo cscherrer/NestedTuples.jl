@@ -48,6 +48,7 @@ call(f,args...; kwargs...) = f(args...; kwargs...)
 end
 
 keysort(t::T) where {T<:Tuple} = keysort.(t)
+keysort(nt::NamedTuple{(), Tuple{}}) = nt
 keysort(x) = x
 
 function keysort(lm::LazyMerge)
