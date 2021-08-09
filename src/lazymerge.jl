@@ -82,6 +82,23 @@ _get_code(tx, ty, k) = :(getproperty(_gety(m), k))
     _get_code(tx, ty, k)
 end
 
+Base.convert(::Type{NamedTuple}, lm::LazyMerge{Nx,Ny}) where {Nx, Ny} = _convert(NamedTuple, lm)
+
+@gg function _convert(::Type{NamedTuple}, lm::LazyMerge{Nx,Ny}) where {Nx, Ny}
+    A = tuple(setdiff(Nx, Ny)...)
+    B = tuple(setdiff(Ny, Nx)...)
+    dupvars = tuple((Nx ∩ Ny)...)
+
+    quote
+        x = _getx(lm)
+        y = _gety(lm)
+        nt = NamedTuple{$A}(x)
+        nt = merge(nt, NamedTuple{$B}(y))
+        dup = NamedTuple{$dupvars}(map(v -> getproperty(lm, v), $dupvars))
+        merge(nt, dup)
+    end
+end
+
 # x = (a = (b = 1, c = 2), f = (g = 3, h = 4), g = 2) 
 # y = (a = (d = 5,), e = (g = 6, j = 7), g = 3)
 # m = LazyMerge(x,y)

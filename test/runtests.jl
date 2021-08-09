@@ -31,4 +31,6 @@ using NestedTuples: with, TypelevelExpr
     @test with(@__MODULE__, (x=1,), (y=2,), TypelevelExpr(:(x+y))) == 3
 
     @test keysort(3) == 3
+
+    @test convert(NamedTuple, lazymerge((a = 1, b = 2, c = 3), (b = 4, d = 5))) == (a = 1, c = 3, d = 5, b = 4)
 end
