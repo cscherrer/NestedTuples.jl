@@ -26,13 +26,26 @@ function lazymerge(x, y)
     return LazyMerge(x,y)
 end
 
+function lazymerge3(x, y, z)
+    return LazyMerge3(x, y, z)
+end
 struct LazyMerge{Nx,Ny,Tx,Ty}
     x::NamedTuple{Nx,Tx}
     y::NamedTuple{Ny,Ty}
 end
 
+struct LazyMerge3{Nx,Ny,Nz,Tx,Ty,Tz}
+    x::NamedTuple{Nx,Tx}
+    y::NamedTuple{Ny,Ty}
+    z::NamedTuple{Nz,Tz}
+end
+
 _getx(m::LazyMerge) = getfield(m, :x)
 _gety(m::LazyMerge) = getfield(m, :y)
+
+_getx(m::LazyMerge3) = getfield(m, :x)
+_gety(m::LazyMerge3) = getfield(m, :y)
+_getz(m::LazyMerge3) = getfield(m, :z)
 
 import Base
 
@@ -42,6 +55,17 @@ function Base.show(io::IO, m::LazyMerge)
     print(io, _getx(m))
     print(io, ", ")
     print(io, _gety(m))
+    print(io, ")")
+end
+
+function Base.show(io::IO, m::LazyMerge3)
+    io = IOContext(io, :compact => true)
+    print(io, "LazyMerge(")
+    print(io, _getx(m))
+    print(io, ", ")
+    print(io, _gety(m))
+    print(io, ", ")
+    print(io, _getz(m))
     print(io, ")")
 end
 
@@ -68,6 +92,26 @@ function _get_code(tx::NamedTuple, ty::NamedTuple, k)
     end
 end
 
+_get_code(tx::Missing, ty::Missing, tz::Missing, k) = :(error("type LazyMerge has no field ", k))
+
+_get_code(tx, ty::Missing, tz::Missing, k) = :(getproperty(_getx(m), k)) 
+_get_code(tx::Missing, ty, tz::Missing, k) = :(getproperty(_gety(m), k))
+_get_code(tx::Missing, ty::Missing, tz, k) = :(getproperty(_getz(m), k)) 
+
+_get_code(tx::Missing, ty, tz, k) = _get_code(ty, tz, k)
+_get_code(tx, ty::Missing, tz, k) = _get_code(tx, tz, k)
+_get_code(tx, ty, tz::Missing, k) = _get_code(tx, ty, k)
+
+function _get_code(tx::NamedTuple, ty::NamedTuple, tz::NamedTuple, k)
+    quote 
+        xk = getproperty(_getx(m), k)
+        yk = getproperty(_gety(m), k)
+        zk = getproperty(_gety(m), k)
+        LazyMerge(xk, yk, zk)
+    end
+end
+
+
 # Other than for NamedTuples, `y` gets priority if both match
 # Note that this may need to be updated, e.g. for merging arrays with missing values
 _get_code(tx, ty, k) = :(getproperty(_gety(m), k))
@@ -80,6 +124,18 @@ _get_code(tx, ty, k) = :(getproperty(_gety(m), k))
     ty = if (k ∈ propertynames(y)) getproperty(y, k) else missing end
 
     _get_code(tx, ty, k)
+end
+
+@generated function _get(m::LazyMerge3{Nx,Ny,Nz,Tx,Ty,Tz}, ::Val{k}) where {Nx,Ny,Nz,Tx,Ty,Tz,k}
+    x = schema(NamedTuple{Nx,Tx})
+    y = schema(NamedTuple{Ny,Ty})
+    z = schema(NamedTuple{Nz,Tz})
+
+    tx = if (k ∈ propertynames(x)) getproperty(x, k) else missing end
+    ty = if (k ∈ propertynames(y)) getproperty(y, k) else missing end
+    tz = if (k ∈ propertynames(z)) getproperty(z, k) else missing end
+
+    _get_code(tx, ty, tz, k)
 end
 
 Base.convert(::Type{NamedTuple}, lm::LazyMerge{Nx,Ny}) where {Nx, Ny} = _convert(NamedTuple, lm)
