@@ -26,7 +26,7 @@ function lazymerge(x, y)
     return LazyMerge(x,y)
 end
 
-function lazymerge3(x, y, z)
+function lazymerge(x, y, z)
     return LazyMerge3(x, y, z)
 end
 struct LazyMerge{Nx,Ny,Tx,Ty}
@@ -60,7 +60,7 @@ end
 
 function Base.show(io::IO, m::LazyMerge3)
     io = IOContext(io, :compact => true)
-    print(io, "LazyMerge(")
+    print(io, "LazyMerge3(")
     print(io, _getx(m))
     print(io, ", ")
     print(io, _gety(m))
@@ -74,6 +74,14 @@ function Base.getproperty(m::LazyMerge, k::Symbol)
 end
 
 function Base.get(m::LazyMerge, Val_k::Val{k}) where {k}
+    return _get(m, Val_k)
+end
+
+function Base.getproperty(m::LazyMerge3, k::Symbol) 
+    return get(m, Val(k))
+end
+
+function Base.get(m::LazyMerge3, Val_k::Val{k}) where {k}
     return _get(m, Val_k)
 end
 
