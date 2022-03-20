@@ -32,5 +32,5 @@ using NestedTuples: with, TypelevelExpr
 
     @test keysort(3) == 3
 
-    @test convert(NamedTuple, lazymerge((a = 1, b = 2, c = 3), (b = 4, d = 5))) == (a = 1, c = 3, d = 5, b = 4)
+    @test keysort(convert(NamedTuple, lazymerge((a = 1, b = 2, c = 3), (b = 4, d = 5)))) == keysort((a = 1, c = 3, d = 5, b = 4))
 end
