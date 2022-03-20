@@ -35,6 +35,11 @@ end
 
 NTLike = Union{L,N} where {L<:LazyMerge, N<:NamedTuple}
 
+lazymerge(a::NTLike, b::NTLike) = LazyMerge(a,b)
+
+lazymerge(a, ::Missing) = a
+lazymerge(a, b) = b
+
 lazymerge(::NamedTuple{()}, ::NamedTuple{()}) = NamedTuple()
 lazymerge(nt, ::NamedTuple{()}) = nt
 lazymerge(::NamedTuple{()}, nt) = nt
