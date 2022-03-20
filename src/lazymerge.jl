@@ -41,8 +41,13 @@ lazymerge(::NamedTuple{()}, nt) = nt
 
 lazymerge() = NamedTuple()
 lazymerge(a) = a
-lazymerge(a, b, c, ds...) = lazymerge(lazymerge(a,b), lazymerge(c,ds...))
+lazymerge(a,b,c) = lazymerge(lazymerge(a,b), c)
+lazymerge(a, b, c, d, es...) = lazymerge(lazymerge(a,b), lazymerge(c,d), lazymerge(es...))
 
+function lazymerge(a::A, b::B) where {A<:AbstractArray, B<:AbstractArray}
+    missing isa eltype(A) || return b
+    return LazyMerge(a,b)
+end
 
 export _getx, _gety
 
@@ -63,17 +68,23 @@ function Base.show(io::IO, m::LazyMerge)
     print(io, ")")
 end
 
-
 @inline function Base.getproperty(m::LazyMerge{X,Y}, k::Symbol) where {X<:NTLike,Y<:NTLike}
-    f() = throw(KeyError(k))
-    # _get(m, static(k), f)
-    x = _getx(m)
-    y = _gety(m)
+    getproperty(m, static(k))
+end
 
-    tx = get(x, k, NamedTuple())
-    ty = get(y, k, NamedTuple())
+
+
+@inline function Base.getproperty(m::LazyMerge{X,Y}, ::StaticSymbol{k}) where {X<:NTLike,Y<:NTLike, k}
+    result = _get(m, static(k))
+    result === NoResult() && throw(KeyError(k))
+    return result
+    # x = _getx(m)
+    # y = _gety(m)
+
+    # tx = get(x, k, NamedTuple())
+    # ty = get(y, k, NamedTuple())
     
-    return lazymerge(tx, ty)
+    # return lazymerge(tx, ty)
 end
 
 @inline function Base.get(m::LazyMerge, k::Symbol, default)
@@ -83,29 +94,11 @@ end
 
 Base.propertynames(m::LazyMerge) = union(propertynames(_getx(m)), propertynames(_gety(m)))
 
-_get_code(tx::Missing, ty::Missing, k) = :(error("type LazyMerge has no field ", k))
-
-_get_code(tx, ty::Missing, k) = :(getproperty(_getx(m), k)) 
-_get_code(tx::Missing, ty, k) = :(getproperty(_gety(m), k))
-
-
-
-@inline function _get_code(tx::NTLike, ty::NTLike, k) 
-    quote 
-        xk = getproperty(_getx(m), k)
-        yk = getproperty(_gety(m), k)
-        LazyMerge(xk, yk)
-    end
-end
-
-
-# Other than for NamedTuples, `y` gets priority if both match
-# Note that this may need to be updated, e.g. for merging arrays with missing values
-_get_code(tx, ty, k) = :(getproperty(_gety(m), k))
-
 _get(nt::NamedTuple, ::StaticSymbol{k}) where {k} = getproperty(nt, k)
 
-@generated function _get(m::LazyMerge{X,Y}, ::StaticSymbol{k}, f::F) where {X,Y,k,F}
+struct NoResult end
+
+@generated function _get(m::LazyMerge{X,Y}, ::StaticSymbol{k}) where {X,Y,k}
     schema_x = schema(X)
     schema_y = schema(Y)
 
@@ -132,7 +125,7 @@ _get(nt::NamedTuple, ::StaticSymbol{k}) where {k} = getproperty(nt, k)
             push!(q.args, :(getproperty(_gety(m), k)))
         else
             # k ∉ x, k ∉ y
-            return f()
+            return push!(q.args, :(return NoResult()))
         end
     end
     return q
