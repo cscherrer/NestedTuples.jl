@@ -4,6 +4,15 @@ export lazymerge
 import Base
 using Static 
 
+struct LazyMerge{X,Y}
+    x::X
+    y::Y
+
+    function LazyMerge(x::X, y::Y) where {X,Y}
+        new{X,Y}(x,y)
+    end
+end
+
 """
     lazymerge(x::NamedTuple, y::NamedTuple)
 
@@ -28,21 +37,17 @@ function lazymerge(x, y)
     return LazyMerge(x,y)
 end
 
-struct LazyMerge{X,Y}
-    x::X
-    y::Y
-end
 
 NTLike = Union{L,N} where {L<:LazyMerge, N<:NamedTuple}
 
-lazymerge(a::NTLike, b::NTLike) = LazyMerge(a,b)
 
 lazymerge(a, ::Missing) = a
 lazymerge(a, b) = b
 
 lazymerge(::NamedTuple{()}, ::NamedTuple{()}) = NamedTuple()
-lazymerge(nt, ::NamedTuple{()}) = nt
-lazymerge(::NamedTuple{()}, nt) = nt
+lazymerge(nt::NTLike, ::NamedTuple{()}) = nt
+lazymerge(::NamedTuple{()}, nt::NTLike) = nt
+lazymerge(a::NTLike, b::NTLike) = LazyMerge(a,b)
 
 lazymerge() = NamedTuple()
 lazymerge(a) = a
