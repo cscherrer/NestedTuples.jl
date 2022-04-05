@@ -1,6 +1,17 @@
 using NestedTuples
 
 export lazymerge
+import Base
+using Static 
+
+struct LazyMerge{X,Y}
+    x::X
+    y::Y
+
+    function LazyMerge(x::X, y::Y) where {X,Y}
+        new{X,Y}(x,y)
+    end
+end
 
 """
     lazymerge(x::NamedTuple, y::NamedTuple)
@@ -9,9 +20,9 @@ Create a `LazyMerge` struct that behaves like a recursively merged NamedTuple,
 but is much faster to construct.
 
 In addition to the usual `getproperty`, this structure supports `get`ting by
-`Val` type:
+static keys:
 ```
-(lm::LazyMerge).a == get(lm, Val(:a))
+(lm::LazyMerge).a == get(lm, static(:a))
 ```
 
 In some situatiuons, the latter can be much faster.
@@ -26,26 +37,35 @@ function lazymerge(x, y)
     return LazyMerge(x,y)
 end
 
-function lazymerge(x, y, z)
-    return LazyMerge3(x, y, z)
-end
-struct LazyMerge{Nx,Ny,Tx,Ty}
-    x::NamedTuple{Nx,Tx}
-    y::NamedTuple{Ny,Ty}
+
+NTLike = Union{L,N} where {L<:LazyMerge, N<:NamedTuple}
+
+
+lazymerge(a, ::Missing) = a
+lazymerge(a, b) = b
+
+lazymerge(::NamedTuple{()}, ::NamedTuple{()}) = NamedTuple()
+lazymerge(nt::NTLike, ::NamedTuple{()}) = nt
+lazymerge(::NamedTuple{()}, nt::NTLike) = nt
+lazymerge(a::NTLike, b::NTLike) = LazyMerge(a,b)
+
+lazymerge() = NamedTuple()
+lazymerge(a) = a
+lazymerge(a,b,c) = lazymerge(lazymerge(a,b), c)
+lazymerge(a, b, c, d, es...) = lazymerge(lazymerge(a,b), lazymerge(c,d), lazymerge(es...))
+
+function lazymerge(a::A, b::B) where {A<:AbstractArray, B<:AbstractArray}
+    missing isa eltype(A) || return b
+    return LazyMerge(a,b)
 end
 
-struct LazyMerge3{Nx,Ny,Nz,Tx,Ty,Tz}
-    x::NamedTuple{Nx,Tx}
-    y::NamedTuple{Ny,Ty}
-    z::NamedTuple{Nz,Tz}
-end
+export _getx, _gety
 
 _getx(m::LazyMerge) = getfield(m, :x)
 _gety(m::LazyMerge) = getfield(m, :y)
 
-_getx(m::LazyMerge3) = getfield(m, :x)
-_gety(m::LazyMerge3) = getfield(m, :y)
-_getz(m::LazyMerge3) = getfield(m, :z)
+schema(lm::LazyMerge{X,Y}) where {X,Y} = lazymerge(schema(X), schema(Y))
+schema(::Type{LazyMerge{X,Y}}) where {X,Y} = lazymerge(schema(X), schema(Y))
 
 import Base
 
@@ -58,117 +78,104 @@ function Base.show(io::IO, m::LazyMerge)
     print(io, ")")
 end
 
-function Base.show(io::IO, m::LazyMerge3)
-    io = IOContext(io, :compact => true)
-    print(io, "LazyMerge3(")
-    print(io, _getx(m))
-    print(io, ", ")
-    print(io, _gety(m))
-    print(io, ", ")
-    print(io, _getz(m))
-    print(io, ")")
+@inline function Base.getproperty(m::LazyMerge{X,Y}, k::Symbol) where {X<:NTLike,Y<:NTLike}
+    getproperty(m, static(k))
 end
 
-function Base.getproperty(m::LazyMerge, k::Symbol) 
-    return get(m, Val(k))
+
+
+@inline function Base.getproperty(m::LazyMerge{X,Y}, ::StaticSymbol{k}) where {X<:NTLike,Y<:NTLike, k}
+    result = _get(m, static(k))
+    result === NoResult() && throw(KeyError(k))
+    return result
+    # x = _getx(m)
+    # y = _gety(m)
+
+    # tx = get(x, k, NamedTuple())
+    # ty = get(y, k, NamedTuple())
+    
+    # return lazymerge(tx, ty)
 end
 
-function Base.get(m::LazyMerge, Val_k::Val{k}) where {k}
-    return _get(m, Val_k)
-end
-
-function Base.getproperty(m::LazyMerge3, k::Symbol) 
-    return get(m, Val(k))
-end
-
-function Base.get(m::LazyMerge3, Val_k::Val{k}) where {k}
-    return _get(m, Val_k)
+@inline function Base.get(m::LazyMerge, k::Symbol, default)
+    f() = default
+    return _get(m, static(k), f)
 end
 
 Base.propertynames(m::LazyMerge) = union(propertynames(_getx(m)), propertynames(_gety(m)))
 
-_get_code(tx::Missing, ty::Missing, k) = :(error("type LazyMerge has no field ", k))
+_get(nt::NamedTuple, ::StaticSymbol{k}) where {k} = getproperty(nt, k)
 
-_get_code(tx, ty::Missing, k) = :(getproperty(_getx(m), k)) 
-_get_code(tx::Missing, ty, k) = :(getproperty(_gety(m), k))
+struct NoResult end
 
-function _get_code(tx::NamedTuple, ty::NamedTuple, k)
-    quote 
-        xk = getproperty(_getx(m), k)
-        yk = getproperty(_gety(m), k)
-        LazyMerge(xk, yk)
+@generated function _get(m::LazyMerge{X,Y}, ::StaticSymbol{k}) where {X,Y,k}
+    schema_x = schema(X)
+    schema_y = schema(Y)
+
+    in_x = k ∈ propertynames(schema_x)
+    in_y = k ∈ propertynames(schema_y)
+
+    q = quote
+        $(Expr(:meta, :inline))
     end
-end
 
-_get_code(tx::Missing, ty::Missing, tz::Missing, k) = :(error("type LazyMerge has no field ", k))
-
-_get_code(tx, ty::Missing, tz::Missing, k) = :(getproperty(_getx(m), k)) 
-_get_code(tx::Missing, ty, tz::Missing, k) = :(getproperty(_gety(m), k))
-_get_code(tx::Missing, ty::Missing, tz, k) = :(getproperty(_getz(m), k)) 
-
-_get_code(tx::Missing, ty, tz, k) = _get_code(ty, tz, k)
-_get_code(tx, ty::Missing, tz, k) = _get_code(tx, tz, k)
-_get_code(tx, ty, tz::Missing, k) = _get_code(tx, ty, k)
-
-function _get_code(tx::NamedTuple, ty::NamedTuple, tz::NamedTuple, k)
-    quote 
-        xk = getproperty(_getx(m), k)
-        yk = getproperty(_gety(m), k)
-        zk = getproperty(_gety(m), k)
-        LazyMerge(xk, yk, zk)
+    if in_x
+        if in_y
+            # k ∈ x, k ∈ y
+            getproperty(schema_x, k) isa NTLike || push!(q.args, :(getproperty(_gety(m), k)))
+            getproperty(schema_y, k) isa NTLike || push!(q.args, :(getproperty(_gety(m), k)))
+            push!(q.args, :(lazymerge(getproperty(_getx(m), k), getproperty(_gety(m), k))))
+        else
+            # k ∈ x, k ∉ y
+            push!(q.args, :(getproperty(_getx(m), k)))
+        end
+    else
+        if in_y
+            # k ∉ x, x ∈ y
+            push!(q.args, :(getproperty(_gety(m), k)))
+        else
+            # k ∉ x, k ∉ y
+            return push!(q.args, :(return NoResult()))
+        end
     end
+    return q
 end
 
 
-# Other than for NamedTuples, `y` gets priority if both match
-# Note that this may need to be updated, e.g. for merging arrays with missing values
-_get_code(tx, ty, k) = :(getproperty(_gety(m), k))
+import Base.iterate
 
-@generated function _get(m::LazyMerge{Nx,Ny,Tx,Ty}, ::Val{k}) where {Nx,Ny,Tx,Ty,k}
-    x = schema(NamedTuple{Nx,Tx})
-    y = schema(NamedTuple{Ny,Ty})
+Base.iterate(lm::LazyMerge) = iterate((k => getproperty(lm, k) for k in propertynames(lm)))
+Base.iterate(lm::LazyMerge, s) = iterate((k => getproperty(lm, k) for k in propertynames(lm)), s)
 
-    tx = if (k ∈ propertynames(x)) getproperty(x, k) else missing end
-    ty = if (k ∈ propertynames(y)) getproperty(y, k) else missing end
-
-    _get_code(tx, ty, k)
+function Base.convert(::Type{NamedTuple}, lm::LazyMerge)
+    NamedTuple(k => getproperty(lm, k) for k in propertynames(lm))
 end
 
-@generated function _get(m::LazyMerge3{Nx,Ny,Nz,Tx,Ty,Tz}, ::Val{k}) where {Nx,Ny,Nz,Tx,Ty,Tz,k}
-    x = schema(NamedTuple{Nx,Tx})
-    y = schema(NamedTuple{Ny,Ty})
-    z = schema(NamedTuple{Nz,Tz})
-
-    tx = if (k ∈ propertynames(x)) getproperty(x, k) else missing end
-    ty = if (k ∈ propertynames(y)) getproperty(y, k) else missing end
-    tz = if (k ∈ propertynames(z)) getproperty(z, k) else missing end
-
-    _get_code(tx, ty, tz, k)
-end
-
-Base.convert(::Type{NamedTuple}, lm::LazyMerge{Nx,Ny}) where {Nx, Ny} = _convert(NamedTuple, lm)
-
-@gg function _convert(::Type{NamedTuple}, lm::LazyMerge{Nx,Ny}) where {Nx, Ny}
-    A = tuple(setdiff(Nx, Ny)...)
-    B = tuple(setdiff(Ny, Nx)...)
-    dupvars = tuple((Nx ∩ Ny)...)
-
-    quote
-        x = _getx(lm)
-        y = _gety(lm)
-        nt = NamedTuple{$A}(x)
-        nt = merge(nt, NamedTuple{$B}(y))
-        dup = NamedTuple{$dupvars}(map(v -> getproperty(lm, v), $dupvars))
-        merge(nt, dup)
+export mytest
+function mytest(n)
+    nts = []
+    for j in 1:n
+        push!(nts, randnt(2,2))
     end
+    m = lazymerge(nts...)
+
+    times = []
+
+    for k in propertynames(m)
+        push!(times, @elapsed getproperty(m, k))
+    end
+
+    times
 end
 
-# x = (a = (b = 1, c = 2), f = (g = 3, h = 4), g = 2) 
-# y = (a = (d = 5,), e = (g = 6, j = 7), g = 3)
-# m = LazyMerge(x,y)
+function Base.getindex(lm::LazyMerge{X,Y}, args...) where {X<:AbstractArray, Y<:AbstractArray}
+    _getindex(_gety(lm)[args...], lm, args...)
+end
 
-# m.a
-# m.e
-# m.g
-# m.f
-# m.d
+_getindex(::Missing, lm, args...) = _getx(lm)[args...]
+
+_getindex(y::AbstractArray, lm, args...) = lazymerge(_getx(lm), y)
+
+_getindex(y, lm, args...) = y
+
+Base.length(lm::LazyMerge) = length(_gety(lm))
