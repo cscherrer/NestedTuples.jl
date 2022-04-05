@@ -21,19 +21,24 @@ with(m::Module, nt::NamedTuple, ex::Expr) = with(m, nt, TypelevelExpr(ex))
 end
 
 
-@gg function with(m::Module, nt1::NamedTuple{N1}, nt2::NamedTuple{N2}, ::TypelevelExpr{E}) where {N1,N2,E}
+@gg function with(nt1::NamedTuple{N1,T1}, nt2::NamedTuple{N2,T2}, ::TypelevelExpr{E}) where {N1,N2,T1,T2,E}
+    s1 = schema(NamedTuple{N1,T1})
+    s2 = schema(NamedTuple{N2,T2})
     ex = from_type(E)
     q = quote end
     for x in N1
         xname = QuoteNode(x)
-        push!(q.args, :($x = Base.getproperty(nt1, $xname)))
+        T = getproperty(s1, x)
+        push!(q.args, :($x = Base.getproperty(nt1, $xname)::$T))
     end
     for x in N2
         xname = QuoteNode(x)
-        push!(q.args, :($x = Base.getproperty(nt2, $xname)))
+        T = getproperty(s2, x)
+        push!(q.args, :($x = Base.getproperty(nt2, $xname)::$T))
     end
     push!(q.args, ex)
-    @under_global :m q
+    # @under_global :m q
+    q
 end
 
 """
@@ -83,6 +88,6 @@ macro with(args...)
 
     tle = TypelevelExpr(ex)
     quote
-        with($__module__, $(ctx...), $tle)
+        with($(ctx...), $tle)
     end 
 end
