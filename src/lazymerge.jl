@@ -33,9 +33,7 @@ have one (possibly nested) named tuple for observed data, and another for a
 proposal in an MCMC algorithm. The merge is therefore in the body of a loop
 that's executed many times.
 """
-function lazymerge(x, y)
-    return LazyMerge(x,y)
-end
+function lazymerge end
 
 
 NTLike = Union{L,N} where {L<:LazyMerge, N<:NamedTuple}
