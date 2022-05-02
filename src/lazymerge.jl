@@ -35,6 +35,13 @@ that's executed many times.
 """
 function lazymerge end
 
+import Base: keys
+@generated function Base.keys(::LazyMerge{X,Y}) where {X,Y}
+    x = schema(X)
+    y = schema(Y)
+    keys(x) ∪ keys(y)
+end
+
 
 NTLike = Union{L,N} where {L<:LazyMerge, N<:NamedTuple}
 
