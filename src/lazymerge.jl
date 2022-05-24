@@ -35,6 +35,13 @@ that's executed many times.
 """
 function lazymerge end
 
+import Base: keys
+@generated function Base.keys(::LazyMerge{X,Y}) where {X,Y}
+    x = schema(X)
+    y = schema(Y)
+    keys(x) ∪ keys(y)
+end
+
 
 NTLike = Union{L,N} where {L<:LazyMerge, N<:NamedTuple}
 
@@ -80,7 +87,7 @@ end
     getproperty(m, static(k))
 end
 
-
+struct NoResult end
 
 @inline function Base.getproperty(m::LazyMerge{X,Y}, ::StaticSymbol{k}) where {X<:NTLike,Y<:NTLike, k}
     result = _get(m, static(k))
@@ -96,15 +103,23 @@ end
 end
 
 @inline function Base.get(m::LazyMerge, k::Symbol, default)
-    f() = default
-    return _get(m, static(k), f)
+    f(::NoResult) = default
+    f(result) = result
+    return f(_get(m, static(k)))
+end
+
+
+@inline function Base.get(m::LazyMerge, sk::StaticSymbol{k}, default) where {k}
+    f(::NoResult) = default
+    f(result) = result
+    return f(_get(m, sk))
 end
 
 Base.propertynames(m::LazyMerge) = union(propertynames(_getx(m)), propertynames(_gety(m)))
 
 _get(nt::NamedTuple, ::StaticSymbol{k}) where {k} = getproperty(nt, k)
 
-struct NoResult end
+
 
 @generated function _get(m::LazyMerge{X,Y}, ::StaticSymbol{k}) where {X,Y,k}
     schema_x = schema(X)
@@ -133,7 +148,7 @@ struct NoResult end
             push!(q.args, :(getproperty(_gety(m), k)))
         else
             # k ∉ x, k ∉ y
-            return push!(q.args, :(return NoResult()))
+            push!(q.args, :(return NoResult()))
         end
     end
     return q
