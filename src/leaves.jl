@@ -58,13 +58,7 @@ export leaf_setter
 
 leaf_setter(::Type{T}) where {T} = leaf_setter(schema(T))
 
-@gg function leaf_setter(x::NamedTuple)
-    x = schema(x)
-    _leaf_setter(x)
-end
-
-
-@gg function leaf_setter(x::Tuple)
+@gg function leaf_setter(x::Union{Tuple, NamedTuple})
     x = schema(x)
     _leaf_setter(x)
 end
@@ -82,7 +76,7 @@ struct Leaves end
 
 import Accessors
 
-Accessors.OpticStyle(::Leaves) = ModifyBased()
+Accessors.OpticStyle(::Leaves) = Accessors.ModifyBased()
 
 function Accessors.modify(f, obj, ::Leaves) 
     vs = flatten(unwrap(obj))
