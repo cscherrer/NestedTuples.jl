@@ -100,6 +100,6 @@ macro with(args...)
 
     tle = TypelevelExpr(ex)
     quote
-        with($(ctx...), $tle)
+        with($__module__, $(ctx...), $tle)
     end
 end
