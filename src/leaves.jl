@@ -82,7 +82,7 @@ struct Leaves end
 
 import Accessors
 
-Accessors.OpticStyle(::Leaves) = ModifyBased()
+Accessors.OpticStyle(::Leaves) = Accessors.ModifyBased()
 
 function Accessors.modify(f, obj, ::Leaves) 
     vs = flatten(unwrap(obj))
