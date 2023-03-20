@@ -10,7 +10,7 @@ using NestedTuples: with, TypelevelExpr
     
     @test NestedTuples.flatten(x) == (:a, :b, :l, :u)
   
-    @test NestedTuples.flatten( (a = 1, b = (;), c = 2 ) == (1, 2)
+    @test NestedTuples.flatten( (a = 1, b = (;), c = 2) ) == (1, 2)
 
     @test NestedTuples.keysort(x) == (a = (a = :a, b = :b), q = (l = :l, u = :u))
     
