@@ -9,6 +9,8 @@ using NestedTuples: with, TypelevelExpr
     @test NestedTuples.exprify(x; rename=false) == ([:a, :b, :l, :u], :((a = (a = a, b = b), q = (l = l, u = u))))
     
     @test NestedTuples.flatten(x) == (:a, :b, :l, :u)
+  
+    @test NestedTuples.flatten( (a = 1, b = (;), c = 2 ) == (1, 2)
 
     @test NestedTuples.keysort(x) == (a = (a = :a, b = :b), q = (l = :l, u = :u))
     
