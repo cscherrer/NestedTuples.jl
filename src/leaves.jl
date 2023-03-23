@@ -23,6 +23,7 @@ flatten(x, y...) = (flatten(x)..., flatten(y...)...)
 flatten(x::Tuple) = flatten(x...)
 flatten(x::NamedTuple) = flatten(values(x)...)
 flatten(x) = (x,)
+flatten() = ()
 
 
 using GeneralizedGenerated
